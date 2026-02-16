@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { detectPII } from '../../services/piiDetectionMock';
+import { detectPII } from '../../services/piiDetection';
 
-const ImageMaskEditor = ({ imageFile, onConfirm, onCancel }) => {
+const ImageMaskEditor = ({ imageFile, initialDetections = null, onConfirm, onCancel }) => {
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
     const [masks, setMasks] = useState([]); // Array of {x, y, w, h}
@@ -9,7 +9,7 @@ const ImageMaskEditor = ({ imageFile, onConfirm, onCancel }) => {
     const [startPos, setStartPos] = useState({ x: 0, y: 0 });
     const [imageObj, setImageObj] = useState(null);
     const [scale, setScale] = useState(1);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(!initialDetections);
 
     // Load image and detect PII on mount
     useEffect(() => {
@@ -28,24 +28,46 @@ const ImageMaskEditor = ({ imageFile, onConfirm, onCancel }) => {
                 // Fit to container, allow upscaling if image is small
                 // Use 0.9 factor to leave some margin
                 let s = Math.min(scaleW, scaleH) * 0.9;
-
-                // Ensure it's not too small (at least 50% of container if possible, unless image is tiny)
-                // Actually, just filling the container (constrained by W/H) is usually best.
-
                 setScale(s);
             }
 
-            // Auto detect
-            try {
-                const detected = await detectPII(img);
-                setMasks(detected);
-            } catch (e) {
-                console.error("Detection failed", e);
-            } finally {
+            // Auto detect or use provided detections
+            if (initialDetections) {
+                // Convert detector format to mask format
+                // Detector: { bbox: {x0, y0, x1, y1} }
+                // Mask: { x, y, w, h }
+                const convertedMasks = initialDetections.map(d => ({
+                    x: d.bbox.x0,
+                    y: d.bbox.y0,
+                    w: d.bbox.x1 - d.bbox.x0,
+                    h: d.bbox.y1 - d.bbox.y0
+                }));
+                setMasks(convertedMasks);
                 setIsLoading(false);
+            } else {
+                try {
+                    // Start detection if not provided
+                    const detections = await detectPII(img.src);
+
+                    const convertedMasks = detections.map(d => ({
+                        x: d.bbox.x0,
+                        y: d.bbox.y0,
+                        w: d.bbox.x1 - d.bbox.x0,
+                        h: d.bbox.y1 - d.bbox.y0
+                    }));
+                    setMasks(convertedMasks);
+                } catch (e) {
+                    console.error("Detection failed", e);
+                } finally {
+                    setIsLoading(false);
+                }
             }
         };
-    }, [imageFile]);
+
+        return () => {
+            URL.revokeObjectURL(img.src);
+        };
+    }, [imageFile, initialDetections]);
 
     // Redraw canvas whenever masks or image changes
     useEffect(() => {
@@ -234,7 +256,7 @@ const ImageMaskEditor = ({ imageFile, onConfirm, onCancel }) => {
                     onClick={onCancel}
                     style={{ padding: '10px 20px', background: '#555', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                 >
-                    キャンセル (元画像に戻る)
+                    キャンセル
                 </button>
                 <button
                     onClick={handleCreateMaskedImage}

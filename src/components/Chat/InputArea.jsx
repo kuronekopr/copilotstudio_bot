@@ -1,21 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ImageMaskEditor from '../Image/ImageMaskEditor';
+import { validateImage, generateImageHash } from '../../services/imagePreprocessor';
 
 /**
  * Input Area component.
  * Handles text input, file selection (click + drag/drop), and clipboard paste.
  * Images must go through PII Masking Editor before being added to send queue.
  */
-const InputArea = ({ onSendMessage }) => {
+const InputArea = ({ onSendMessage, disabled = false }) => {
     const [text, setText] = useState('');
     const [images, setImages] = useState([]); // Array of File objects (Masked)
     const [pendingImage, setPendingImage] = useState(null); // Image currently being edited
     const [isDragging, setIsDragging] = useState(false);
 
     // Use a queue for mulitple files drop/paste? 
-    // For simplicity, we process one by one if multiple dropped.
-    // Or better: store pendingImages queue.
+    // To handle multiple files, we process them one by one.
     const [pendingQueue, setPendingQueue] = useState([]);
+
+    // Store hashes of currently selected images to prevent duplicates
+    const [imageHashes, setImageHashes] = useState(new Set());
 
     const fileInputRef = useRef(null);
 
@@ -41,6 +44,7 @@ const InputArea = ({ onSendMessage }) => {
     };
 
     const handlePaste = (e) => {
+        if (disabled) return;
         const items = e.clipboardData?.items;
         if (items) {
             const newImages = [];
@@ -59,6 +63,7 @@ const InputArea = ({ onSendMessage }) => {
     };
 
     const handleFileSelect = (e) => {
+        if (disabled) return;
         if (e.target.files) {
             addImagesToQueue(Array.from(e.target.files));
         }
@@ -66,23 +71,59 @@ const InputArea = ({ onSendMessage }) => {
         e.target.value = '';
     };
 
-    const addImagesToQueue = (newFiles) => {
-        const validImages = newFiles.filter(file => file.type.startsWith('image/'));
+    const addImagesToQueue = async (newFiles) => {
+        const validFiles = [];
 
-        if (images.length + pendingQueue.length + validImages.length > 5) {
+        for (const file of newFiles) {
+            // 1. Validation
+            const validation = validateImage(file);
+            if (!validation.valid) {
+                alert(`${file.name}: ${validation.error}`);
+                continue;
+            }
+
+            // 2. Duplication Check
+            try {
+                const hash = await generateImageHash(file);
+                if (imageHashes.has(hash)) {
+                    alert(`${file.name}: この画像はすでに選択されています。`);
+                    continue;
+                }
+
+                // Attach hash to file object for later reference
+                file._hash = hash;
+                validFiles.push(file);
+            } catch (e) {
+                console.error('Hash generation failed', e);
+                // Allow processing if hash fails
+                validFiles.push(file);
+            }
+        }
+
+        if (images.length + pendingQueue.length + validFiles.length > 5) {
             alert('画像は最大5枚までです。');
-            // Should we truncate? Let's just return for now.
             return;
         }
 
-        setPendingQueue(prev => [...prev, ...validImages]);
+        setPendingQueue(prev => [...prev, ...validFiles]);
     };
 
     const removeImage = (index) => {
+        const fileToRemove = images[index];
         setImages(prev => prev.filter((_, i) => i !== index));
+
+        // Remove hash
+        if (fileToRemove._hash) {
+            setImageHashes(prev => {
+                const next = new Set(prev);
+                next.delete(fileToRemove._hash);
+                return next;
+            });
+        }
     };
 
     const handleDragOver = (e) => {
+        if (disabled) return;
         e.preventDefault();
         setIsDragging(true);
     };
@@ -93,6 +134,7 @@ const InputArea = ({ onSendMessage }) => {
     };
 
     const handleDrop = (e) => {
+        if (disabled) return;
         e.preventDefault();
         setIsDragging(false);
         if (e.dataTransfer.files) {
@@ -101,28 +143,35 @@ const InputArea = ({ onSendMessage }) => {
     };
 
     const handleSendClick = () => {
+        if (disabled) return;
         if (!text.trim() && images.length === 0) return;
 
-        // Direct Send (PII Check is done during adding)
+        // Direct Send logic
         onSendMessage(text, images);
         setText('');
         setImages([]);
+        setImageHashes(new Set());
     };
 
     // Editor Callbacks
     const handleEditorConfirm = (maskedFile) => {
+        // Track hash of confirmed image (using original image's hash)
+        if (pendingImage?._hash) {
+            setImageHashes(prev => new Set(prev).add(pendingImage._hash));
+            maskedFile._hash = pendingImage._hash;
+        }
+
         setImages(prev => [...prev, maskedFile]);
         setPendingImage(null);
     };
 
     const handleEditorCancel = () => {
-        // Discard current image
         setPendingImage(null);
     };
 
     return (
         <div
-            className="input-area"
+            className={`input-area ${disabled ? 'disabled' : ''}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}

@@ -1,86 +1,82 @@
-// Use CDN-loaded Tesseract (window.Tesseract) instead of npm bundle
-// Vite's bundling corrupts Tesseract.js structured output (blocks/lines/words return empty)
+/**
+ * PII Detection Service using Tesseract.js (CDN version)
+ * Detects EMAIL, PHONE_NUMBER, and NAME (Romaji) from image text.
+ */
+
+// Regex definitions
+const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+const phoneRegex = /(\d{2,4}-\d{2,4}-\d{4})|(\d{10,11})/g;
+// Simple Romaji Name: Capitalized Word + Space + Capitalized Word (2-3 chars min)
+const romajiNameRegex = /([A-Z][a-z]{1,}\s[A-Z][a-z]{1,})/g;
+
+const UI_LABELS = ['Cancel', 'OK', 'Send', 'Upload']; // Exclude common UI text
 
 /**
- * Client-side PII detection using Tesseract.js (CDN Version)
- * Detects Email addresses and Japanese Phone numbers.
- * 
- * @param {HTMLImageElement} imageElement 
- * @returns {Promise<{detections: Array<{x: number, y: number, w: number, h: number}>, text: string, debug: string}>}
+ * Detect PII in the given image URL/Blob.
+ * @param {string} imageUrl 
+ * @returns {Promise<Array>} Array of detections { type, text, bbox, confidence }
  */
-export const detectPII = async (imageElement) => {
-    const debugLog = [];
-
-    // Use CDN-loaded Tesseract from window
-    const Tesseract = window.Tesseract;
-    if (!Tesseract) {
-        throw new Error("Tesseract.js CDN not loaded. Check index.html.");
+export async function detectPII(imageUrl) {
+    // Check if Tesseract is loaded via CDN
+    if (!window.Tesseract) {
+        console.error('Tesseract.js not loaded from CDN');
+        throw new Error('Tesseract script not loaded');
     }
 
-    debugLog.push(`Start detectPII (CDN Tesseract v${Tesseract.version || '5.x'})`);
-
-    // Regex for Phone
-    const phoneRegex = /(0\d{1,4}.{0,3}\d{1,4}.{0,3}\d{4})|(\(0\d{1,4}\).{0,3}\d{1,4}.{0,3}\d{4})/;
-    const simplePhone = /0\d{2,4}-\d{2,4}-\d{4}/;
-
-    // Aggressive digit check
-    const isAggressivePhone = (text) => {
-        const digits = text.replace(/[^0-9]/g, '');
-        return digits.length >= 10 && (digits.startsWith('0') || digits.length >= 11);
-    };
+    const worker = await window.Tesseract.createWorker();
 
     try {
-        console.log("[PII] Running CDN Tesseract...");
+        await worker.loadLanguage('eng+jpn');
+        await worker.initialize('eng+jpn');
 
-        const result = await Tesseract.recognize(
-            imageElement,
-            'eng+jpn',
-            { logger: m => console.log("[Tesseract]", m) }
-        );
-
-        const data = result.data;
-        const lines = data.lines || [];
-
-        debugLog.push(`Lines: ${lines.length}, Words: ${(data.words || []).length}`);
-
+        const { data } = await worker.recognize(imageUrl);
         const detections = [];
-        const uniqueKeys = new Set();
 
-        const addDetection = (bbox, type, text) => {
-            if (!bbox || typeof bbox.x0 !== 'number') return;
+        // Analyze lines
+        if (data && data.lines) {
+            data.lines.forEach(line => {
+                const text = line.text;
+                const bbox = line.bbox; // {x0, y0, x1, y1}
+                const confidence = line.confidence;
 
-            const x = bbox.x0;
-            const y = bbox.y0;
-            const w = bbox.x1 - bbox.x0;
-            const h = bbox.y1 - bbox.y0;
+                // Skip low confidence or empty lines
+                if (confidence < 30 || !text || !text.trim()) return;
 
-            const key = `${Math.round(x)},${Math.round(y)},${Math.round(w)},${Math.round(h)}`;
-            if (!uniqueKeys.has(key)) {
-                debugLog.push(`[MATCH] ${type}: (${x},${y},${w},${h}) "${text.substring(0, 30)}"`);
-                detections.push({ x, y, w, h });
-                uniqueKeys.add(key);
-            }
-        };
+                // Skip UI labels
+                if (UI_LABELS.includes(text.trim())) return;
 
-        // Process Lines - CDN version confirmed to return lines correctly
-        lines.forEach(line => {
-            const text = line.text.trim();
+                // 1. Email
+                const emails = text.match(emailRegex);
+                if (emails) {
+                    emails.forEach(match => {
+                        detections.push({ type: 'EMAIL', text: match, bbox, confidence });
+                    });
+                }
 
-            if (phoneRegex.test(text) || simplePhone.test(text) || isAggressivePhone(text)) {
-                addDetection(line.bbox, "Phone", text);
-            } else if (text.includes('@') && text.includes('.')) {
-                addDetection(line.bbox, "Email", text);
-            }
-        });
+                // 2. Phone
+                const phones = text.match(phoneRegex);
+                if (phones) {
+                    phones.forEach(match => {
+                        detections.push({ type: 'PHONE_NUMBER', text: match, bbox, confidence });
+                    });
+                }
 
-        debugLog.push(`Total Detections: ${detections.length}`);
-        const debugString = debugLog.join('\n');
-        console.log("--- PII DEBUG LOG ---\n", debugString);
+                // 3. Romaji Name
+                const names = text.match(romajiNameRegex);
+                if (names) {
+                    names.forEach(match => {
+                        detections.push({ type: 'NAME', text: match, bbox, confidence });
+                    });
+                }
+            });
+        }
 
-        return { detections, text: data.text, debug: debugString };
+        await worker.terminate();
+        return detections;
 
     } catch (error) {
-        console.error("Tesseract detection failed:", error);
+        console.error('PII Detection failed:', error);
+        await worker.terminate();
         throw error;
     }
-};
+}
