@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Threshold Configuration",
+  "description": "マスキング実行時の信頼度閾値設定。GET /v1/threshold/current のレスポンススキーマ。",
+  "type": "object",
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "リクエストID（トレーシング用）"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "閾値取得時刻"
+    },
+    "global_threshold": {
+      "type": "number",
+      "format": "float",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "グローバル信頼度閾値（デフォルト）"
+    },
+    "pii_type_thresholds": {
+      "type": "object",
+      "description": "PIIタイプ別の信頼度閾値",
+      "properties": {
+        "person_name": {
+          "type": "number",
+          "format": "float",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "credit_card": {
+          "type": "number",
+          "format": "float",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "phone_number": {
+          "type": "number",
+          "format": "float",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "email": {
+          "type": "number",
+          "format": "float",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "date_of_birth": {
+          "type": "number",
+          "format": "float",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "ssn": {
+          "type": "number",
+          "format": "float",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "address": {
+          "type": "number",
+          "format": "float",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "passport": {
+          "type": "number",
+          "format": "float",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "driver_license": {
+          "type": "number",
+          "format": "float",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "bank_account": {
+          "type": "number",
+          "format": "float",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "ip_address": {
+          "type": "number",
+          "format": "float",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": {
+        "type": "number",
+        "format": "float",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "mask_patterns": {
+      "type": "object",
+      "description": "PIIタイプ別のマスクパターン",
+      "properties": {
+        "person_name": {
+          "type": "string",
+          "enum": ["FULL", "PARTIAL", "HASH", "REDACT"]
+        },
+        "credit_card": {
+          "type": "string",
+          "enum": ["FULL", "PARTIAL", "HASH", "REDACT"]
+        },
+        "phone_number": {
+          "type": "string",
+          "enum": ["FULL", "PARTIAL", "HASH", "REDACT"]
+        },
+        "email": {
+          "type": "string",
+          "enum": ["FULL", "PARTIAL", "HASH", "REDACT"]
+        }
+      },
+      "additionalProperties": {
+        "type": "string",
+        "enum": ["FULL", "PARTIAL", "HASH", "REDACT"]
+      }
+    },
+    "auto_mask_enabled": {
+      "type": "boolean",
+      "description": "自動マスキングが有効か"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "閾値の最終更新時刻"
+    },
+    "updated_by": {
+      "type": "string",
+      "description": "最終更新者"
+    },
+    "version": {
+      "type": "string",
+      "description": "設定バージョン"
+    },
+    "notes": {
+      "type": "string",
+      "description": "設定に関するメモ"
+    }
+  },
+  "required": ["request_id", "timestamp", "global_threshold", "pii_type_thresholds", "auto_mask_enabled"],
+  "additionalProperties": false
+}

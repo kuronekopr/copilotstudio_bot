@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Mask Confirmation Request",
+  "description": "マスキング操作確認エンドポイント（POST /v1/mask/confirm）のリクエストスキーマ。",
+  "type": "object",
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "リクエストID（トレーシング用）"
+    },
+    "session_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "セッションID"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "ユーザーID"
+    },
+    "content_id": {
+      "type": "string",
+      "description": "対象コンテンツID（ファイルID、テキストID 等）"
+    },
+    "content_type": {
+      "type": "string",
+      "enum": ["image", "text"],
+      "description": "コンテンツタイプ"
+    },
+    "pii_auto_detect_used": {
+      "type": "boolean",
+      "description": "自動PII検出が使用されたか"
+    },
+    "mask_operations": {
+      "type": "array",
+      "description": "実施されたマスキング操作リスト",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pii_type": {
+            "type": "string",
+            "description": "PIIタイプ",
+            "enum": ["person_name", "credit_card", "phone_number", "email", "date_of_birth", "ssn", "address", "passport", "driver_license", "bank_account", "ip_address"]
+          },
+          "mask_pattern": {
+            "type": "string",
+            "description": "使用されたマスクパターン",
+            "enum": ["FULL", "PARTIAL", "HASH", "REDACT"]
+          },
+          "position": {
+            "type": "object",
+            "description": "テキスト内の位置情報",
+            "properties": {
+              "start": {
+                "type": "integer"
+              },
+              "end": {
+                "type": "integer"
+              }
+            }
+          },
+          "confidence": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "検出信頼度"
+          },
+          "applied": {
+            "type": "boolean",
+            "description": "実際にマスキングが適用されたか"
+          }
+        },
+        "required": ["pii_type", "mask_pattern", "confidence", "applied"]
+      }
+    },
+    "masking_metadata": {
+      "type": "object",
+      "description": "マスキング処理のメタデータ",
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "description": "使用されたマスキングアルゴリズム"
+        },
+        "confidence_threshold": {
+          "type": "number",
+          "format": "float",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "マスキング実行の信頼度閾値"
+        },
+        "processing_time_ms": {
+          "type": "integer",
+          "description": "処理時間（ミリ秒）"
+        }
+      }
+    },
+    "confirmation_status": {
+      "type": "string",
+      "description": "確認ステータス",
+      "enum": ["confirm", "reject", "review_needed"]
+    },
+    "notes": {
+      "type": "string",
+      "description": "確認時のメモ・コメント（オプション）"
+    }
+  },
+  "required": ["request_id", "session_id", "user_id", "content_id", "content_type", "pii_auto_detect_used", "mask_operations", "confirmation_status"],
+  "additionalProperties": false
+}

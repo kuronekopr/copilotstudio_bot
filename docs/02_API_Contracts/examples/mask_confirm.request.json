@@ -1,0 +1,47 @@
+{
+  "request_id": "880e8400-e29b-41d4-a716-446655440003",
+  "session_id": "660e8400-e29b-41d4-a716-446655440001",
+  "user_id": "user-12345",
+  "content_id": "file-abc123",
+  "content_type": "image",
+  "pii_auto_detect_used": true,
+  "mask_operations": [
+    {
+      "pii_type": "person_name",
+      "mask_pattern": "PARTIAL",
+      "position": {
+        "start": 145,
+        "end": 165
+      },
+      "confidence": 0.95,
+      "applied": true
+    },
+    {
+      "pii_type": "credit_card",
+      "mask_pattern": "FULL",
+      "position": {
+        "start": 312,
+        "end": 331
+      },
+      "confidence": 0.98,
+      "applied": true
+    },
+    {
+      "pii_type": "email",
+      "mask_pattern": "PARTIAL",
+      "position": {
+        "start": 450,
+        "end": 475
+      },
+      "confidence": 0.91,
+      "applied": true
+    }
+  ],
+  "masking_metadata": {
+    "algorithm": "transformer-based-pii-detector",
+    "confidence_threshold": 0.85,
+    "processing_time_ms": 1240
+  },
+  "confirmation_status": "confirm",
+  "notes": "All PII detected and masked successfully. User reviewed and approved."
+}

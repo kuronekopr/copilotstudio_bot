@@ -1,0 +1,28 @@
+{
+  "event_id": "550e8400-e29b-41d4-a716-446655440000",
+  "session_id": "660e8400-e29b-41d4-a716-446655440001",
+  "user_id": "user-12345",
+  "event_type": "masking",
+  "event_source": "backend",
+  "timestamp": "2025-02-16T10:30:45.123Z",
+  "request_id": "770e8400-e29b-41d4-a716-446655440002",
+  "pii_auto_detect_used": true,
+  "pii_metadata": {
+    "detected_types": [
+      "person_name",
+      "credit_card",
+      "email"
+    ],
+    "masked_count": 5,
+    "confidence_threshold": 0.85
+  },
+  "payload": {
+    "file_id": "file-abc123",
+    "content_id": "content-xyz789",
+    "score": 0.92,
+    "cluster_id": 2,
+    "status": "masked"
+  },
+  "duration_ms": 1250,
+  "status": "success"
+}

@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Event",
+  "description": "構造化イベント。1問い合わせ=1イベント。PII検出・マスキング・スコアリングなど全操作をログ。",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "イベント一意識別子",
+      "format": "uuid"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "セッションID（複数イベント間の関連付け）",
+      "format": "uuid"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "ユーザーID"
+    },
+    "event_type": {
+      "type": "string",
+      "description": "イベントタイプ",
+      "enum": ["pii_detection", "masking", "upload", "scoring", "threshold_check", "token_generation", "error"]
+    },
+    "event_source": {
+      "type": "string",
+      "description": "イベント発生元",
+      "enum": ["frontend", "backend", "ai_layer", "auth_service"]
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "イベント発生時刻"
+    },
+    "request_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "リクエストID（トレーシング用）"
+    },
+    "pii_auto_detect_used": {
+      "type": "boolean",
+      "description": "自動PII検出が使用されたか"
+    },
+    "pii_metadata": {
+      "type": "object",
+      "description": "PII関連メタデータ",
+      "properties": {
+        "detected_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "検出されたPIIタイプ（person_name, credit_card, phone_number, email, date_of_birth 等）"
+        },
+        "masked_count": {
+          "type": "integer",
+          "description": "マスキングされたPII数"
+        },
+        "confidence_threshold": {
+          "type": "number",
+          "format": "float",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "使用された信頼度閾値"
+        }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "description": "イベント固有のペイロード",
+      "properties": {
+        "file_id": {
+          "type": "string"
+        },
+        "content_id": {
+          "type": "string"
+        },
+        "score": {
+          "type": "number",
+          "format": "float"
+        },
+        "cluster_id": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "error_info": {
+      "type": "object",
+      "description": "エラー発生時の情報",
+      "properties": {
+        "error_code": {
+          "type": "string"
+        },
+        "error_message": {
+          "type": "string"
+        }
+      }
+    },
+    "duration_ms": {
+      "type": "integer",
+      "description": "処理時間（ミリ秒）"
+    },
+    "status": {
+      "type": "string",
+      "description": "イベント処理ステータス",
+      "enum": ["success", "failure", "partial"]
+    }
+  },
+  "required": ["event_id", "session_id", "event_type", "event_source", "timestamp", "pii_auto_detect_used", "status"],
+  "additionalProperties": false
+}

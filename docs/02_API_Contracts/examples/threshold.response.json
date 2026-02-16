@@ -1,0 +1,36 @@
+{
+  "request_id": "990e8400-e29b-41d4-a716-446655440004",
+  "timestamp": "2025-02-16T10:35:20.456Z",
+  "global_threshold": 0.85,
+  "pii_type_thresholds": {
+    "person_name": 0.88,
+    "credit_card": 0.95,
+    "phone_number": 0.87,
+    "email": 0.82,
+    "date_of_birth": 0.90,
+    "ssn": 0.98,
+    "address": 0.80,
+    "passport": 0.93,
+    "driver_license": 0.91,
+    "bank_account": 0.96,
+    "ip_address": 0.75
+  },
+  "mask_patterns": {
+    "person_name": "PARTIAL",
+    "credit_card": "FULL",
+    "phone_number": "PARTIAL",
+    "email": "PARTIAL",
+    "date_of_birth": "FULL",
+    "ssn": "FULL",
+    "address": "PARTIAL",
+    "passport": "FULL",
+    "driver_license": "FULL",
+    "bank_account": "FULL",
+    "ip_address": "REDACT"
+  },
+  "auto_mask_enabled": true,
+  "last_updated": "2025-02-15T08:00:00.000Z",
+  "updated_by": "admin-user-001",
+  "version": "1.2.3",
+  "notes": "Updated thresholds for improved accuracy on credit card and SSN detection. Effective from 2025-02-15."
+}

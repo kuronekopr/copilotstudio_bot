@@ -1,0 +1,424 @@
+openapi: 3.0.3
+info:
+  title: AI Image Chatbot API
+  description: |
+    フロント／バック／AI層のインターフェース契約。
+    - PII検出・マスキング必須
+    - イベントソース対応
+    - トークン認証ベース
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+  license:
+    name: Apache 2.0
+
+servers:
+  - url: https://api.example.com
+    description: Production API
+  - url: http://localhost:8080
+    description: Local Development
+
+paths:
+  /v1/directline/token:
+    post:
+      summary: Authentication Token Acquisition
+      description: Direct Line トークン取得エンドポイント。Azure Bot Service との認証に使用。
+      operationId: getDirectLineToken
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                  description: ユーザー識別子
+                session_id:
+                  type: string
+                  description: セッション識別子
+              required:
+                - user_id
+      responses:
+        '200':
+          description: トークン取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: Direct Line トークン
+                  expires_in:
+                    type: integer
+                    description: トークン有効期限（秒）
+                  user_id:
+                    type: string
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/uploads/masked-image:
+    post:
+      summary: Upload Masked Image
+      description: マスキング済み画像をアップロード。PII検出済みのメタデータを含む。
+      operationId: uploadMaskedImage
+      tags:
+        - Upload
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: 画像ファイル
+                pii_metadata:
+                  type: object
+                  description: PII検出メタデータ
+                  properties:
+                    pii_auto_detect_used:
+                      type: boolean
+                      description: 自動PII検出を使用したか
+                    detected_types:
+                      type: array
+                      items:
+                        type: string
+                      description: 検出されたPIIタイプ（person_name, credit_card 等）
+                    confidence_threshold:
+                      type: number
+                      format: float
+                      description: 検出信頼度閾値
+              required:
+                - image
+                - pii_metadata
+      responses:
+        '201':
+          description: アップロード成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  file_id:
+                    type: string
+                    description: ファイルID
+                  url:
+                    type: string
+                    format: uri
+                    description: 画像URL
+                  pii_count:
+                    type: integer
+                    description: マスキングされたPIIの数
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Payload Too Large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/pii/detect:
+    post:
+      summary: Detect PII in Text/Image
+      description: テキストまたは画像からPII（個人識別情報）を検出。
+      operationId: detectPII
+      tags:
+        - PII Detection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content_type:
+                  type: string
+                  enum: [text, image_url]
+                  description: コンテンツタイプ
+                content:
+                  type: string
+                  description: テキストまたは画像URL
+                detection_types:
+                  type: array
+                  items:
+                    type: string
+                  description: 検出対象のPIIタイプ（person_name, credit_card, phone_number, email 等）
+              required:
+                - content_type
+                - content
+      responses:
+        '200':
+          description: PII検出成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PIIDetection'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/mask/confirm:
+    post:
+      summary: Confirm Masking Operation
+      description: マスキング操作の確認。マスキング後の状態をデータベースに記録。
+      operationId: confirmMask
+      tags:
+        - Masking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaskConfirm'
+      responses:
+        '200':
+          description: マスキング確認成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mask_id:
+                    type: string
+                    description: マスキングID
+                  status:
+                    type: string
+                    enum: [confirmed, pending]
+                  masked_count:
+                    type: integer
+                    description: マスキング数
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/scoring/cluster:
+    post:
+      summary: Scoring & Clustering
+      description: 画像またはテキストのスコアリングとクラスタリング。
+      operationId: scoreAndCluster
+      tags:
+        - Scoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content_id:
+                  type: string
+                  description: コンテンツID
+                content_type:
+                  type: string
+                  enum: [text, image]
+                content:
+                  type: string
+                  description: コンテンツまたはコンテンツURL
+                cluster_algorithm:
+                  type: string
+                  enum: [kmeans, hierarchical, dbscan]
+                  default: kmeans
+                num_clusters:
+                  type: integer
+                  minimum: 2
+                  maximum: 100
+                  default: 5
+              required:
+                - content_id
+                - content_type
+                - content
+      responses:
+        '200':
+          description: スコアリング・クラスタリング成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content_id:
+                    type: string
+                  score:
+                    type: number
+                    format: float
+                    description: 総合スコア（0.0-1.0）
+                  cluster_id:
+                    type: integer
+                    description: クラスタID
+                  confidence:
+                    type: number
+                    format: float
+                    description: 信頼度
+                  features:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        value:
+                          type: number
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/threshold/current:
+    get:
+      summary: Get Current Threshold
+      description: 現在のマスキング閾値を取得。
+      operationId: getCurrentThreshold
+      tags:
+        - Configuration
+      parameters:
+        - name: pii_type
+          in: query
+          description: PIIタイプ（省略可）
+          schema:
+            type: string
+          example: credit_card
+      responses:
+        '200':
+          description: 閾値取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Threshold'
+        '404':
+          description: Threshold not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/event:
+    post:
+      summary: Log Event
+      description: API呼び出し・マスキング・スコアリングなどのイベントをログ。構造化JSON、1問い合わせ=1イベント。
+      operationId: logEvent
+      tags:
+        - Events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Event'
+      responses:
+        '201':
+          description: イベント記録成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event_id:
+                    type: string
+                    description: イベントID
+                  timestamp:
+                    type: string
+                    format: date-time
+                  status:
+                    type: string
+                    enum: [accepted, queued]
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Error:
+      $ref: '../schemas/error.json'
+    Event:
+      $ref: '../schemas/event.json'
+    PIIDetection:
+      $ref: '../schemas/pii.json'
+    MaskConfirm:
+      $ref: '../schemas/mask_confirm.json'
+    Threshold:
+      $ref: '../schemas/threshold.json'
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer Token
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Authentication
+    description: トークン認証関連
+  - name: Upload
+    description: 画像アップロード関連
+  - name: PII Detection
+    description: PII検出関連
+  - name: Masking
+    description: マスキング関連
+  - name: Scoring
+    description: スコアリング・クラスタリング関連
+  - name: Configuration
+    description: 設定・閾値関連
+  - name: Events
+    description: イベントログ関連

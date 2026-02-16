@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Error Response",
+  "description": "標準エラーレスポンススキーマ。全APIで共通使用。",
+  "type": "object",
+  "properties": {
+    "error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "エラーコード（INVALID_REQUEST, AUTH_FAILED, RATE_LIMIT, INTERNAL_ERROR 等）",
+          "enum": ["INVALID_REQUEST", "AUTH_FAILED", "RATE_LIMIT", "INTERNAL_ERROR", "NOT_FOUND", "CONFLICT", "UNPROCESSABLE"]
+        },
+        "message": {
+          "type": "string",
+          "description": "エラーメッセージ（ユーザー向け）"
+        },
+        "details": {
+          "type": "array",
+          "description": "詳細情報",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string",
+                "description": "エラーが発生したフィールド"
+              },
+              "reason": {
+                "type": "string",
+                "description": "エラー理由"
+              }
+            },
+            "required": ["field", "reason"]
+          }
+        },
+        "request_id": {
+          "type": "string",
+          "description": "リクエストID（トレーシング用）",
+          "format": "uuid"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "エラー発生時刻"
+        }
+      },
+      "required": ["code", "message"]
+    }
+  },
+  "required": ["error"],
+  "additionalProperties": false
+}

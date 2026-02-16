@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PII Detection Response",
+  "description": "PII検出エンドポイント（/v1/pii/detect）のレスポンススキーマ。",
+  "type": "object",
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "リクエストID（トレーシング用）"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "検出実行時刻"
+    },
+    "content_type": {
+      "type": "string",
+      "enum": ["text", "image_url"],
+      "description": "コンテンツタイプ"
+    },
+    "pii_auto_detect_used": {
+      "type": "boolean",
+      "description": "自動PII検出アルゴリズムが使用されたか"
+    },
+    "detection_results": {
+      "type": "array",
+      "description": "検出されたPIIリスト",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pii_type": {
+            "type": "string",
+            "description": "PIIタイプ",
+            "enum": ["person_name", "credit_card", "phone_number", "email", "date_of_birth", "ssn", "address", "passport", "driver_license", "bank_account", "ip_address"]
+          },
+          "detected_value": {
+            "type": "string",
+            "description": "検出された値（マスク済み）"
+          },
+          "original_length": {
+            "type": "integer",
+            "description": "元の値の長さ"
+          },
+          "confidence": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "検出信頼度"
+          },
+          "position": {
+            "type": "object",
+            "description": "テキスト内の位置情報（テキストの場合）",
+            "properties": {
+              "start": {
+                "type": "integer",
+                "description": "開始位置"
+              },
+              "end": {
+                "type": "integer",
+                "description": "終了位置"
+              }
+            }
+          },
+          "masked": {
+            "type": "boolean",
+            "description": "マスキング済みか"
+          },
+          "mask_pattern": {
+            "type": "string",
+            "description": "使用されたマスクパターン（FULL, PARTIAL, HASH 等）",
+            "enum": ["FULL", "PARTIAL", "HASH", "REDACT"]
+          }
+        },
+        "required": ["pii_type", "confidence", "masked"]
+      }
+    },
+    "summary": {
+      "type": "object",
+      "description": "検出サマリー",
+      "properties": {
+        "total_pii_count": {
+          "type": "integer",
+          "description": "検出されたPII総数"
+        },
+        "pii_type_counts": {
+          "type": "object",
+          "description": "PIIタイプ別カウント",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "high_confidence_count": {
+          "type": "integer",
+          "description": "高信頼度（>0.8）のPII数"
+        },
+        "average_confidence": {
+          "type": "number",
+          "format": "float",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "平均信頼度"
+        }
+      },
+      "required": ["total_pii_count"]
+    },
+    "status": {
+      "type": "string",
+      "description": "検出処理ステータス",
+      "enum": ["success", "partial", "failed"]
+    }
+  },
+  "required": ["request_id", "timestamp", "content_type", "pii_auto_detect_used", "detection_results", "summary", "status"],
+  "additionalProperties": false
+}

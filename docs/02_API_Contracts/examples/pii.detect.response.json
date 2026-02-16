@@ -1,0 +1,81 @@
+{
+  "request_id": "aa0e8400-e29b-41d4-a716-446655440005",
+  "timestamp": "2025-02-16T10:28:15.789Z",
+  "content_type": "text",
+  "pii_auto_detect_used": true,
+  "detection_results": [
+    {
+      "pii_type": "person_name",
+      "detected_value": "J*** D***",
+      "original_length": 10,
+      "confidence": 0.96,
+      "position": {
+        "start": 145,
+        "end": 155
+      },
+      "masked": true,
+      "mask_pattern": "PARTIAL"
+    },
+    {
+      "pii_type": "credit_card",
+      "detected_value": "****-****-****-4532",
+      "original_length": 19,
+      "confidence": 0.99,
+      "position": {
+        "start": 312,
+        "end": 331
+      },
+      "masked": true,
+      "mask_pattern": "FULL"
+    },
+    {
+      "pii_type": "email",
+      "detected_value": "j****@example.com",
+      "original_length": 25,
+      "confidence": 0.92,
+      "position": {
+        "start": 450,
+        "end": 475
+      },
+      "masked": true,
+      "mask_pattern": "PARTIAL"
+    },
+    {
+      "pii_type": "phone_number",
+      "detected_value": "(555) ***-****",
+      "original_length": 14,
+      "confidence": 0.88,
+      "position": {
+        "start": 520,
+        "end": 534
+      },
+      "masked": true,
+      "mask_pattern": "PARTIAL"
+    },
+    {
+      "pii_type": "ssn",
+      "detected_value": "***-**-7890",
+      "original_length": 11,
+      "confidence": 0.97,
+      "position": {
+        "start": 600,
+        "end": 611
+      },
+      "masked": true,
+      "mask_pattern": "FULL"
+    }
+  ],
+  "summary": {
+    "total_pii_count": 5,
+    "pii_type_counts": {
+      "person_name": 1,
+      "credit_card": 1,
+      "email": 1,
+      "phone_number": 1,
+      "ssn": 1
+    },
+    "high_confidence_count": 4,
+    "average_confidence": 0.944
+  },
+  "status": "success"
+}
