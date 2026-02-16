@@ -1,0 +1,57 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mC:/Antigravity/copilotstudio_bot[39m
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mhandles text-only message sending
+[22m[39m[Event] text_message_sending {}
+Message sent id-123
+[Event] masked_message_sent {}
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mprocesses image and shows PII review when PII detected
+[22m[39m[Event] image_selected { count: [33m1[39m }
+[Event] preprocessing_started {}
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mprocesses image and shows PII review when PII detected
+[22m[39m[Event] preprocessing_completed { processingTimeMs: [90mundefined[39m }
+[Event] pii_detection_completed { detectionCount: [33m1[39m }
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mcompletes PII review and sends masked image
+[22m[39m[Event] image_selected { count: [33m1[39m }
+[Event] preprocessing_started {}
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mcompletes PII review and sends masked image
+[22m[39m[Event] preprocessing_completed { processingTimeMs: [90mundefined[39m }
+[Event] pii_detection_completed { detectionCount: [33m1[39m }
+
+[90mstderr[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mcompletes PII review and sends masked image
+[22m[39m[StateMachine] Invalid transition: PII_REVIEW + SELECT_IMAGE
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mcompletes PII review and sends masked image
+[22m[39m[Event] pii_review_submitted {}
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mcompletes PII review and sends masked image
+[22m[39mMessage sent id-123
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mcompletes PII review and sends masked image
+[22m[39m[Event] masked_message_sent {}
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mprocesses image and skips review when NO PII detected
+[22m[39m[Event] image_selected { count: [33m1[39m }
+[Event] preprocessing_started {}
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mprocesses image and skips review when NO PII detected
+[22m[39m[Event] preprocessing_completed { processingTimeMs: [90mundefined[39m }
+[Event] pii_detection_completed { detectionCount: [33m0[39m }
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mprocesses image and skips review when NO PII detected
+[22m[39mMessage sent id-123
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mprocesses image and skips review when NO PII detected
+[22m[39m[Event] masked_message_sent {}
+
+ [32m✓[39m src/components/Chat/ChatWindow.test.jsx [2m([22m[2m5 tests[22m[2m)[22m[32m 127[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 08:04:54
+[2m   Duration [22m 1.77s[2m (transform 137ms, setup 142ms, import 255ms, tests 127ms, environment 1.05s)[22m
+
