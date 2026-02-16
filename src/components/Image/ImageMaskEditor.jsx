@@ -24,7 +24,14 @@ const ImageMaskEditor = ({ imageFile, onConfirm, onCancel }) => {
                 const containerH = containerRef.current.clientHeight;
                 const scaleW = containerW / img.naturalWidth;
                 const scaleH = containerH / img.naturalHeight;
-                const s = Math.min(scaleW, scaleH, 1); // Don't scale up
+
+                // Fit to container, allow upscaling if image is small
+                // Use 0.9 factor to leave some margin
+                let s = Math.min(scaleW, scaleH) * 0.9;
+
+                // Ensure it's not too small (at least 50% of container if possible, unless image is tiny)
+                // Actually, just filling the container (constrained by W/H) is usually best.
+
                 setScale(s);
             }
 
@@ -45,6 +52,8 @@ const ImageMaskEditor = ({ imageFile, onConfirm, onCancel }) => {
         if (!canvasRef.current || !imageObj) return;
 
         const ctx = canvasRef.current.getContext('2d');
+
+        // Canvas size equals displayed size
         const width = imageObj.naturalWidth * scale;
         const height = imageObj.naturalHeight * scale;
 
@@ -52,6 +61,7 @@ const ImageMaskEditor = ({ imageFile, onConfirm, onCancel }) => {
         canvasRef.current.height = height;
 
         // Draw image
+        // Note: drawImage takes destination w/h
         ctx.drawImage(imageObj, 0, 0, width, height);
 
         // Draw masks
@@ -59,13 +69,6 @@ const ImageMaskEditor = ({ imageFile, onConfirm, onCancel }) => {
         masks.forEach(mask => {
             ctx.fillRect(mask.x * scale, mask.y * scale, mask.w * scale, mask.h * scale);
         });
-
-        // Draw current selection if drawing
-        if (isDrawing) {
-            // Handled in mouseMove but finalized here? No, mouseMove draws on top of clean state usually.
-            // Actually, for simplicity, we just rely on the masks state.
-            // During drag, we might want a temporary visual.
-        }
 
     }, [imageObj, masks, scale]);
 
@@ -145,7 +148,24 @@ const ImageMaskEditor = ({ imageFile, onConfirm, onCancel }) => {
 
     const handleCreateMaskedImage = () => {
         if (!canvasRef.current) return;
-        const dataUrl = canvasRef.current.toDataURL(imageFile.type);
+
+        // We need to generate the FINAL image at ORIGINAL resolution, not screen resolution
+        // So we create a temporary canvas
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = imageObj.naturalWidth;
+        tempCanvas.height = imageObj.naturalHeight;
+        const ctx = tempCanvas.getContext('2d');
+
+        // Draw original image
+        ctx.drawImage(imageObj, 0, 0);
+
+        // Draw masks (using original coordinates)
+        ctx.fillStyle = 'black';
+        masks.forEach(mask => {
+            ctx.fillRect(mask.x, mask.y, mask.w, mask.h);
+        });
+
+        const dataUrl = tempCanvas.toDataURL(imageFile.type);
 
         // Convert DataURL to File object
         fetch(dataUrl)
@@ -156,11 +176,14 @@ const ImageMaskEditor = ({ imageFile, onConfirm, onCancel }) => {
             });
     };
 
+    const handleZoomIn = () => setScale(prev => prev * 1.2);
+    const handleZoomOut = () => setScale(prev => prev / 1.2);
+
     return (
         <div style={{
             position: 'fixed',
             top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.8)',
+            backgroundColor: 'rgba(0,0,0,0.85)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -171,16 +194,21 @@ const ImageMaskEditor = ({ imageFile, onConfirm, onCancel }) => {
             <div style={{ marginBottom: '10px', textAlign: 'center' }}>
                 <h3>PII マスクエディタ</h3>
                 <p style={{ fontSize: '0.9rem' }}>ドラッグして隠したい部分を選択してください。黒い四角をクリックすると削除できます。</p>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '5px' }}>
+                    <button onClick={handleZoomOut} style={{ padding: '4px 12px', cursor: 'pointer', color: 'black' }}>-</button>
+                    <span style={{ display: 'inline-block', minWidth: '50px' }}>{Math.round(scale * 100)}%</span>
+                    <button onClick={handleZoomIn} style={{ padding: '4px 12px', cursor: 'pointer', color: 'black' }}>+</button>
+                </div>
             </div>
 
             <div
                 ref={containerRef}
                 style={{
                     position: 'relative',
-                    maxWidth: '90%',
-                    maxHeight: '70vh',
+                    width: '90vw',
+                    height: '75vh',
                     border: '2px solid #555',
-                    overflow: 'hidden',
+                    overflow: 'auto', // Allow scrolling if zoomed in
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -188,13 +216,17 @@ const ImageMaskEditor = ({ imageFile, onConfirm, onCancel }) => {
                 }}
             >
                 {isLoading && <div style={{ position: 'absolute' }}>検出中...</div>}
-                <canvas
-                    ref={canvasRef}
-                    onMouseDown={handleMouseDown}
-                    onMouseMove={handleMouseMove}
-                    onMouseUp={handleMouseUp}
-                    style={{ cursor: 'crosshair', display: 'block' }}
-                />
+
+                {/* Wrapper to handle centering when smaller, scrolling when larger */}
+                <div style={{ position: 'relative' }}>
+                    <canvas
+                        ref={canvasRef}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
+                        style={{ cursor: 'crosshair', display: 'block' }}
+                    />
+                </div>
             </div>
 
             <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
