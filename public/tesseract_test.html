@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tesseract.js Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
+</head>
+<body>
+    <h1>Tesseract.js v5.1.0 Output Inspector</h1>
+    <input type="file" id="imageInput" accept="image/*">
+    <br><br>
+    <img id="preview" style="max-width:400px; border:1px solid #ccc;">
+    <br><br>
+    <button id="runBtn" disabled>Run OCR</button>
+    <pre id="output" style="max-height:600px; overflow:auto; background:#eee; padding:10px;"></pre>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const preview = document.getElementById('preview');
+        const runBtn = document.getElementById('runBtn');
+        const output = document.getElementById('output');
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                preview.src = URL.createObjectURL(file);
+                runBtn.disabled = false;
+            }
+        });
+
+        runBtn.addEventListener('click', async () => {
+            output.textContent = 'Processing...';
+            runBtn.disabled = true;
+
+            try {
+                const result = await Tesseract.recognize(
+                    preview,
+                    'eng+jpn',
+                    { logger: m => console.log(m) }
+                );
+
+                const data = result.data;
+                const info = [];
+                
+                info.push('=== KEYS ===');
+                info.push('Top-level keys: ' + Object.keys(data).join(', '));
+                info.push('');
+                
+                info.push('=== TEXT ===');
+                info.push(data.text ? data.text.substring(0, 200) : 'EMPTY');
+                info.push('');
+                
+                info.push('=== BLOCKS ===');
+                info.push('Count: ' + (data.blocks ? data.blocks.length : 'undefined'));
+                if (data.blocks && data.blocks.length > 0) {
+                    const b = data.blocks[0];
+                    info.push('First block keys: ' + Object.keys(b).join(', '));
+                    if (b.paragraphs && b.paragraphs.length > 0) {
+                        info.push('First para keys: ' + Object.keys(b.paragraphs[0]).join(', '));
+                        if (b.paragraphs[0].lines && b.paragraphs[0].lines.length > 0) {
+                            const line = b.paragraphs[0].lines[0];
+                            info.push('First line keys: ' + Object.keys(line).join(', '));
+                            info.push('First line text: ' + line.text);
+                            info.push('First line bbox: ' + JSON.stringify(line.bbox));
+                        }
+                    }
+                }
+                info.push('');
+
+                info.push('=== LINES ===');
+                info.push('Count: ' + (data.lines ? data.lines.length : 'undefined'));
+                if (data.lines && data.lines.length > 0) {
+                    info.push('First line keys: ' + Object.keys(data.lines[0]).join(', '));
+                    info.push('First line text: ' + data.lines[0].text);
+                    info.push('First line bbox: ' + JSON.stringify(data.lines[0].bbox));
+                }
+                info.push('');
+
+                info.push('=== WORDS ===');
+                info.push('Count: ' + (data.words ? data.words.length : 'undefined'));
+                if (data.words && data.words.length > 0) {
+                    info.push('First word keys: ' + Object.keys(data.words[0]).join(', '));
+                    info.push('First word text: ' + data.words[0].text);
+                    info.push('First word bbox: ' + JSON.stringify(data.words[0].bbox));
+                }
+                info.push('');
+
+                info.push('=== TSV ===');
+                info.push('Length: ' + (data.tsv ? data.tsv.length : 'undefined'));
+                if (data.tsv && data.tsv.length > 0) {
+                    info.push('First 200 chars: ' + data.tsv.substring(0, 200));
+                }
+                info.push('');
+
+                info.push('=== HOCR ===');
+                info.push('Length: ' + (data.hocr ? data.hocr.length : 'undefined'));
+                if (data.hocr && data.hocr.length > 0) {
+                    info.push('First 300 chars: ' + data.hocr.substring(0, 300));
+                }
+                info.push('');
+
+                info.push('=== BOX ===');
+                info.push('Length: ' + (data.box ? data.box.length : 'undefined'));
+
+                output.textContent = info.join('\n');
+            } catch (err) {
+                output.textContent = 'Error: ' + err.message;
+            }
+            runBtn.disabled = false;
+        });
+    </script>
+</body>
+</html>

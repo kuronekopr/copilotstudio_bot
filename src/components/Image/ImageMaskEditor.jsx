@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { detectPII } from '../../services/piiDetectionMock';
+import { detectPII } from '../../services/piiDetection'; // Use real Tesseract service
 
 const ImageMaskEditor = ({ imageFile, onConfirm, onCancel }) => {
     const canvasRef = useRef(null);
@@ -10,6 +10,8 @@ const ImageMaskEditor = ({ imageFile, onConfirm, onCancel }) => {
     const [imageObj, setImageObj] = useState(null);
     const [scale, setScale] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
+    const [statusMessage, setStatusMessage] = useState('初期化中...');
+    const [ocrText, setOcrText] = useState('');
 
     // Load image and detect PII on mount
     useEffect(() => {
@@ -37,10 +39,20 @@ const ImageMaskEditor = ({ imageFile, onConfirm, onCancel }) => {
 
             // Auto detect
             try {
-                const detected = await detectPII(img);
-                setMasks(detected);
+                setStatusMessage('AIが画像を解析中... (数秒かかります)');
+                const { detections, text, debug } = await detectPII(img);
+                setMasks(detections);
+                setOcrText(text + "\n\n--- DEBUG ---\n" + debug);
+
+                const textSnippet = text.replace(/\s+/g, ' ').slice(0, 50);
+                if (detections.length === 0) {
+                    setStatusMessage(`PIIは検出されませんでした。\n(認識テキスト先頭: "${textSnippet}...")`);
+                } else {
+                    setStatusMessage(`検出完了: ${detections.length} 箇所をマスクしました。\n(認識テキスト先頭: "${textSnippet}...")`);
+                }
             } catch (e) {
                 console.error("Detection failed", e);
+                setStatusMessage(`検出に失敗しました: ${e.message || e}`);
             } finally {
                 setIsLoading(false);
             }
@@ -193,11 +205,16 @@ const ImageMaskEditor = ({ imageFile, onConfirm, onCancel }) => {
         }}>
             <div style={{ marginBottom: '10px', textAlign: 'center' }}>
                 <h3>PII マスクエディタ</h3>
-                <p style={{ fontSize: '0.9rem' }}>ドラッグして隠したい部分を選択してください。黒い四角をクリックすると削除できます。</p>
+                <p style={{ fontSize: '0.9rem' }}>
+                    {statusMessage}
+                    <br />
+                    ドラッグして隠したい部分を選択してください。黒い四角をクリックすると削除できます。
+                </p>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '5px' }}>
                     <button onClick={handleZoomOut} style={{ padding: '4px 12px', cursor: 'pointer', color: 'black' }}>-</button>
                     <span style={{ display: 'inline-block', minWidth: '50px' }}>{Math.round(scale * 100)}%</span>
                     <button onClick={handleZoomIn} style={{ padding: '4px 12px', cursor: 'pointer', color: 'black' }}>+</button>
+                    <button onClick={() => alert(ocrText)} style={{ padding: '4px 12px', cursor: 'pointer', color: 'black', fontSize: '0.8rem' }}>OCR全文確認</button>
                 </div>
             </div>
 
