@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
+import ResponseDisplay from './ResponseDisplay';
 
-const MessageList = ({ messages, currentUserId }) => {
+const MessageList = ({ messages, currentUserId, onVote, onOptionSelect }) => {
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -11,22 +12,10 @@ const MessageList = ({ messages, currentUserId }) => {
         scrollToBottom();
     }, [messages]);
 
-    const renderContent = (msg) => {
-        // Basic text rendering. In real app, markdown support is needed (e.g. react-markdown)
-        // Here we split by newlines for basic formatting
-        const textContent = msg.text ? (
-            <div>
-                {msg.text.split('\n').map((line, i) => (
-                    <React.Fragment key={i}>
-                        {line}
-                        <br />
-                    </React.Fragment>
-                ))}
-            </div>
-        ) : null;
+    const renderAttachments = (msg) => {
+        if (!msg.attachments || msg.attachments.length === 0) return null;
 
-        // Render attachments (images)
-        const attachments = msg.attachments ? (
+        return (
             <div className="message-attachments" style={{ marginTop: '8px' }}>
                 {msg.attachments.map((att, idx) => {
                     if (att.contentType && att.contentType.startsWith('image/')) {
@@ -39,15 +28,42 @@ const MessageList = ({ messages, currentUserId }) => {
                             />
                         );
                     }
-                    return null; // Handle other types if needed
+                    return null;
                 })}
+            </div>
+        );
+    };
+
+    const renderContent = (msg, isUser) => {
+        if (!isUser) {
+            return (
+                <>
+                    <ResponseDisplay
+                        activity={msg}
+                        onVote={onVote}
+                        onOptionSelect={onOptionSelect}
+                    />
+                    {renderAttachments(msg)}
+                </>
+            );
+        }
+
+        // User Message: Basic text rendering
+        const textContent = msg.text ? (
+            <div>
+                {msg.text.split('\n').map((line, i) => (
+                    <React.Fragment key={i}>
+                        {line}
+                        <br />
+                    </React.Fragment>
+                ))}
             </div>
         ) : null;
 
         return (
             <>
                 {textContent}
-                {attachments}
+                {renderAttachments(msg)}
             </>
         );
     };
@@ -59,10 +75,11 @@ const MessageList = ({ messages, currentUserId }) => {
                 return (
                     <div key={msg.id || index} className={`message ${isUser ? 'user' : 'bot'}`}>
                         <div className="message-content">
-                            {renderContent(msg)}
+                            {renderContent(msg, isUser)}
                         </div>
                         <span className="message-time">
-                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {/* Assuming timestamp is available, fall back to current time if needed (though usually present) */}
+                            {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                         </span>
                     </div>
                 );

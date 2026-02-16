@@ -109,11 +109,6 @@ describe('ChatWindow Integration', () => {
             expect(screen.getByText('画像を処理中...')).toBeDefined();
         });
 
-        // Verify PII Detection Status (might happen fast)
-        // await waitFor(() => {
-        //     expect(screen.getByText('内容を分析中...')).toBeDefined();
-        // });
-
         // Verify Editor Appears
         await waitFor(() => {
             expect(screen.getByTestId('image-mask-editor')).toBeDefined();
@@ -175,6 +170,91 @@ describe('ChatWindow Integration', () => {
 
             // Should call postActivity
             expect(directLineService.directLine.postActivity).toHaveBeenCalled();
+        });
+    });
+
+    // Phase 4 Tests
+    it('displays FAQ and handles vote (AUTO_RESOLVE)', async () => {
+        let activityHandler;
+        directLineService.subscribeToActivities.mockImplementation((handler) => {
+            activityHandler = handler;
+            return { unsubscribe: vi.fn() };
+        });
+
+        render(<ChatWindow onClose={() => { }} />);
+
+        // Simulate Incoming Bot Message
+        act(() => {
+            if (activityHandler) {
+                activityHandler({
+                    from: { id: 'bot', name: 'Bot' },
+                    type: 'message',
+                    text: 'Here is the answer.',
+                    id: 'msg-faq-1',
+                    timestamp: new Date().toISOString(),
+                    value: {
+                        answerType: 'AUTO_RESOLVE',
+                        faqLinks: [{ title: 'Help Link', url: 'http://example.com' }]
+                    }
+                });
+            }
+        });
+
+        // Verify UI elements
+        await waitFor(() => {
+            expect(screen.getByText('Here is the answer.')).toBeDefined();
+            expect(screen.getByText('Help Link')).toBeDefined();
+            expect(screen.getByText('回答は役に立ちましたか？')).toBeDefined();
+        });
+
+        // Vote Up
+        fireEvent.click(screen.getByText('👍'));
+
+        // Verify Vote Transition
+        await waitFor(() => {
+            expect(screen.getByText('ご協力ありがとうございました')).toBeDefined();
+        });
+    });
+
+    it('displays clarification options and sends selection', async () => {
+        let activityHandler;
+        directLineService.subscribeToActivities.mockImplementation((handler) => {
+            activityHandler = handler;
+            return { unsubscribe: vi.fn() };
+        });
+
+        render(<ChatWindow onClose={() => { }} />);
+
+        act(() => {
+            if (activityHandler) {
+                activityHandler({
+                    from: { id: 'bot', name: 'Bot' },
+                    type: 'message',
+                    text: 'Which one?',
+                    id: 'msg-ask-1',
+                    timestamp: new Date().toISOString(),
+                    value: {
+                        answerType: 'ASK_CLARIFICATION',
+                        options: [{ label: 'Option A', value: 'Choice A' }, { label: 'Option B' }]
+                    }
+                });
+            }
+        });
+
+        await waitFor(() => {
+            expect(screen.getByText('Which one?')).toBeDefined();
+            expect(screen.getByText('Option A')).toBeDefined();
+        });
+
+        // Select Option
+        fireEvent.click(screen.getByText('Option A'));
+
+        // Verify Message Sent with Option Value
+        await waitFor(() => {
+            expect(directLineService.directLine.postActivity).toHaveBeenCalledWith(expect.objectContaining({
+                text: 'Choice A',
+                type: 'message'
+            }));
         });
     });
 });
