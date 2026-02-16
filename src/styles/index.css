@@ -1,0 +1,37 @@
+:root {
+  --primary-color: #0078D4;
+  --secondary-color: #f3f2f1;
+  --text-color: #323130;
+  --bot-bg: #e5e5e5;
+  --user-bg: #dcedff;
+  --header-height: 50px;
+  --input-area-height: 80px;
+  --chat-width: 400px;
+  --chat-height: 600px;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+  color: var(--text-color);
+  background-color: transparent; /* For embedding */
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #c7c7c7;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
+}
