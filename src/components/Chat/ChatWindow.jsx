@@ -200,6 +200,25 @@ const ChatWindow = ({ onClose }) => {
         dispatch({ type: ACTIONS.RESET });
     };
 
+    const handleVote = (messageId, voteType) => {
+        console.log(`Voted ${voteType} for message ${messageId}`);
+        // Update message to show voted state
+        setMessages(prev => prev.map(msg => {
+            if (msg.id === messageId) {
+                return {
+                    ...msg,
+                    value: { ...msg.value, hasVoted: true }
+                };
+            }
+            return msg;
+        }));
+    };
+
+    const handleOptionSelect = (option) => {
+        const text = option.value || option.label || option;
+        handleSendMessage(text, []);
+    };
+
     return (
         <div className="chat-window">
             <div className="chat-header">
@@ -218,7 +237,12 @@ const ChatWindow = ({ onClose }) => {
                 </div>
             )}
 
-            <MessageList messages={messages} currentUserId={directLineService.userId} />
+            <MessageList
+                messages={messages}
+                currentUserId={directLineService.userId}
+                onVote={handleVote}
+                onOptionSelect={handleOptionSelect}
+            />
 
             {/* Status Indicator (spinner during processing) */}
             <StatusIndicator message={statusMessage} isVisible={isProcessing} />
