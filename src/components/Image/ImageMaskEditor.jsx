@@ -47,7 +47,7 @@ const ImageMaskEditor = ({ imageFile, initialDetections = null, onConfirm, onCan
             } else {
                 try {
                     // Start detection if not provided
-                    const detections = await detectPII(img.src);
+                    const { detections } = await detectPII(img.src);
 
                     const convertedMasks = detections.map(d => ({
                         x: d.bbox.x0,

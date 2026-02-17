@@ -72,7 +72,20 @@ export async function detectPII(imageUrl) {
         }
 
         await worker.terminate();
-        return detections;
+
+        // Calculate stats
+        const detectedCount = detections.length;
+        const confidenceAvg = detectedCount > 0
+            ? detections.reduce((sum, d) => sum + d.confidence, 0) / detectedCount
+            : 0;
+
+        return {
+            detections,
+            stats: {
+                detectedCount,
+                confidenceAvg: parseFloat(confidenceAvg.toFixed(2))
+            }
+        };
 
     } catch (error) {
         console.error('PII Detection failed:', error);

@@ -816,198 +816,100 @@ cluster_id + error_code + screen_type + user_text
 
 # 1\. 全体処理パイプライン（厳密フロー）
 
-```
-mathematica
-Copy code
-
+```mathematica
 User Input
   ↓
-Image Preprocess
+[Client Side]
+Image Preprocess (Resize/Compress)
   ↓
-OCR
+OCR (Tesseract.js)
   ↓
-PII Detection
+PII Detection & Masking
   ↓
-PII Masking
+Direct Line Transmission
   ↓
-Image Feature Extraction
+[Server Side: Copilot Studio]
+RAG Search & Answer Generation
   ↓
-Cluster Scoring
-  ↓
-Statistical Weight Model
-  ↓
-Misclassification Probability Estimation
-  ↓
-Threshold Decision
-  ↓
-RAG Query Construction
-  ↓
-Final Answer Generation
-  ↓
-Event Logging (Append Only)
+[Async / Logging]
+Statistical Analysis & Logging
 ```
 
 * * *
 
-# 2\. 画像前処理設計
+# 2\. 画像前処理設計 (Client Side)
 
-## 2.1 リサイズ処理
+## 2.1 リサイズ処理 (Canvas API)
 
 長辺制限：
-
-scale=min⁡(1,1600max⁡(W,H))\\text{scale} = \\min\\left(1, \\frac{1600}{\\max(W, H)}\\right)scale=min(1,max(W,H)1600​)W′=W⋅scaleW' = W \\cdot scaleW′=W⋅scaleH′=H⋅scaleH' = H \\cdot scaleH′=H⋅scale
+scale = min(1, 1600 / max(W, H))
 
 JPEG品質：
-
-Q=0.8Q = 0.8Q=0.8
+Q = 0.8
 
 * * *
 
 ## 2.2 EXIF削除
-
-画像再エンコードによりメタデータ除去。
-
-* * *
-
-# 3\. OCR信頼度モデル
-
-OCR出力：
-
-T={t1,t2,...,tn}T = \\{t\_1, t\_2, ..., t\_n\\}T={t1​,t2​,...,tn​}
-
-各トークン信頼度：
-
-ci∈\[0,1\]c\_i \\in \[0,1\]ci​∈\[0,1\]
-
-平均信頼度：
-
-OCR\_confidence=1n∑i=1nciOCR\\\_confidence = \\frac{1}{n} \\sum\_{i=1}^{n} c\_iOCR\_confidence=n1​i=1∑n​ci​
+Canvas再描画によりメタデータ除去。
 
 * * *
 
-# 4\. PII自動検出モデル
+# 3\. OCR信頼度モデル (Client Side)
 
-## 4.1 PII検出スコア
-
-各候補エンティティ eee:
-
-PII\_score(e)=α⋅regex\_match+β⋅NER\_confidencePII\\\_score(e) = \\alpha \\cdot regex\\\_match + \\beta \\cdot NER\\\_confidencePII\_score(e)=α⋅regex\_match+β⋅NER\_confidence
+OCR出力 (Tesseract.js):
+Confidence Score (0-100) を 0-1 に正規化して使用。
 
 * * *
+
+# 4\. PII自動検出モデル (Client Side)
+
+## 4.1 PII検出ロジック
+- 正規表現 (Email, Phone, CreditCard)
+- 辞書マッチング (Japanese Names)
 
 ## 4.2 閾値判定
-
-PII\_detected=PII\_score>θPIIPII\\\_detected = PII\\\_score > \\theta\_{PII}PII\_detected=PII\_score>θPII​
-
-初期値：
-
-θPII=0.75\\theta\_{PII} = 0.75θPII​=0.75
-
-* * *
+- Regex Match: Score = 1.0 (即時マスク)
+- Dictionary Match: Score = 0.8 (> Threshold 0.75)
 
 ## 4.3 マスク処理
+Canvas上で検出座標を黒塗りつぶし (FillRect)。
 
-対象文字列を：
-
-```
-markdown
-Copy code
-
-****MASKED****
-```
-
-に置換。
-
-* * *
-
-## 4.4 ログ項目
-
+## 4.4 ログ項目 (ChannelData)
 ```json
-json
-Copy code
-
 {
-  "pii_auto_detect_used": true,
-  "pii_detected_count": 2,
-  "pii_confidence_avg": 0.82
+  "pii": {
+    "autoDetectUsed": true,
+    "detectedCount": 2,
+    "confidenceAvg": 0.82
+  }
 }
 ```
 
 * * *
 
-# 5\. クラスタ分類スコアリングモデル
+# 5\. クラスタ分類 & スコアリング (Server Side / Async)
 
-各クラスタ CkC\_kCk​ に対して：
+**Backend Logging Layer (Azure Functions) で実施**
 
-Score(Ck)=w1⋅OCR\_confidence+w2⋅error\_code\_match+w3⋅cluster\_prior+w4⋅rag\_similarityScore(C\_k) =
-w\_1 \\cdot OCR\\\_confidence +
-w\_2 \\cdot error\\\_code\\\_match +
-w\_3 \\cdot cluster\\\_prior +
-w\_4 \\cdot rag\\\_similarityScore(Ck​)=w1​⋅OCR\_confidence+w2​⋅error\_code\_match+w3​⋅cluster\_prior+w4​⋅rag\_similarity
+Web Frontendから送信された `channelData` (OCR結果、PIIスコア等) と、Copilot Studioの回答ログを紐付け、事後分析としてスコアリングを行う。
 
-初期重み：
+## 5.1 スコアリングモデル
+各クラスタ $C_k$ に対して：
+$Score(C_k) = w_1 \cdot \text{OCR\_confidence} + w_2 \cdot \text{ErrorMatch} + w_3 \cdot \text{RAG\_Relevance}$
 
-| 項目 | 重み |
-| --- | --- |
-| OCR | 0.3 |
-| error\_code | 0.3 |
-| prior | 0.2 |
-| rag\_similarity | 0.2 |
+## 5.2 誤認識確率 (Misclassification Probability)
+$P_{error} = 1 - \max(\text{Softmax}(Score))$
 
 * * *
 
-# 6\. Softmax確率化
+# 6\. 閾値判定 & 最適化 (Async Batch)
 
-P(Ck)=eScore(Ck)∑jeScore(Cj)P(C\_k) = \\frac{e^{Score(C\_k)}}{\\sum\_j e^{Score(C\_j)}}P(Ck​)=∑j​eScore(Cj​)eScore(Ck​)​
+## 6.1 判定ロジック
+- **Real-time**: Frontend/Copilot Studioは `Auto_Resolve` (高信頼度) か `Escalate` (低信頼度) を簡易判定。
+- **Batch**: Azure Functionsが詳細スコアを計算し、次回の閾値最適化に利用。
 
-* * *
-
-# 7\. 誤認識確率
-
-Misclassification\_Probability=1−max⁡kP(Ck)Misclassification\\\_Probability = 1 - \\max\_k P(C\_k)Misclassification\_Probability=1−kmax​P(Ck​)
-
-* * *
-
-# 8\. 閾値判定ロジック
-
-Decision={Auto\_Resolveif Misclassification\_Probability<θautoAsk\_Clarificationif θauto≤p<θescEscalateif p≥θescDecision =
-\\begin{cases}
-Auto\\\_Resolve & \\text{if } Misclassification\\\_Probability < \\theta\_{auto} \\\
-Ask\\\_Clarification & \\text{if } \\theta\_{auto} \\le p < \\theta\_{esc} \\\
-Escalate & \\text{if } p \\ge \\theta\_{esc}
-\\end{cases}Decision=⎩⎨⎧​Auto\_ResolveAsk\_ClarificationEscalate​if Misclassification\_Probability<θauto​if θauto​≤p<θesc​if p≥θesc​​
-
-初期値：
-
-- θauto=0.25\\theta\_{auto} = 0.25θauto​=0.25
-
-- θesc=0.6\\theta\_{esc} = 0.6θesc​=0.6
-
-
-* * *
-
-# 9\. 閾値自動最適化
-
-## 9.1 ROC生成
-
-月次ログ：
-
-- TP
-
-- FP
-
-- FN
-
-- TN
-
-
-Youden Index:
-
-J=Sensitivity+Specificity−1J = Sensitivity + Specificity - 1J=Sensitivity+Specificity−1
-
-最適閾値：
-
-θ∗=arg⁡max⁡θJ(θ)\\theta^\* = \\arg\\max\_\\theta J(\\theta)θ∗=argθmax​J(θ)
+## 6.2 閾値自動最適化
+月次ログからROC曲線を生成し、Youden Indexに基づいて $\theta_{auto}, \theta_{esc}$ を更新。
 
 * * *
 
@@ -1046,93 +948,52 @@ Copy code
 
 * * *
 
-## 12.1 スコア計算
+# 12\. コードレベル設計 (Backend Logging Reference)
+
+※以下はAzure Functions (Log Analysis) での事後分析用ロジックの参照実装です。
+
+## 12.1 スコア計算 (Reference)
 
 ```ts
-ts
-Copy code
-
 interface ClusterFeatures {
   ocrConfidence: number;
   errorMatch: number;
   prior: number;
   ragSimilarity: number;
 }
+// ... (Logic implemented in Python/Node.js on Backend)
+```
 
-const weights = {
-  ocr: 0.3,
-  error: 0.3,
-  prior: 0.2,
-  rag: 0.2
+* * *
+
+## 12.2 Softmax (Reference)
+(Backend Implementation)
+
+* * *
+
+## 12.3 誤認識確率 (Reference)
+(Backend Implementation)
+
+* * *
+
+## 12.4 PII検出 (Client Side Implementation)
+
+```js
+// src/services/piiDetection.js implementation
+export const detectPII = (text) => {
+  const patterns = {
+    email: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/,
+    phone: /(?:\d{2,4}-)?\d{2,4}-\d{4}/,
+    // ...
+  };
+  // ...
 };
-
-function computeScore(f: ClusterFeatures): number {
-  return (
-    weights.ocr * f.ocrConfidence +
-    weights.error * f.errorMatch +
-    weights.prior * f.prior +
-    weights.rag * f.ragSimilarity
-  );
-}
 ```
 
 * * *
 
-## 12.2 Softmax
-
-```ts
-ts
-Copy code
-
-function softmax(scores: number[]): number[] {
-  const max = Math.max(...scores);
-  const exps = scores.map(s => Math.exp(s - max));
-  const sum = exps.reduce((a, b) => a + b, 0);
-  return exps.map(e => e / sum);
-}
-```
-
-* * *
-
-## 12.3 誤認識確率
-
-```ts
-ts
-Copy code
-
-function misclassificationProbability(probs: number[]): number {
-  return 1 - Math.max(...probs);
-}
-```
-
-* * *
-
-## 12.4 PII検出
-
-```ts
-ts
-Copy code
-
-function detectPII(text: string): boolean {
-  const emailRegex = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i;
-  return emailRegex.test(text);
-}
-```
-
-* * *
-
-## 12.5 閾値最適化（簡易例）
-
-```ts
-ts
-Copy code
-
-function youdenIndex(sensitivity: number, specificity: number): number {
-  return sensitivity + specificity - 1;
-}
-```
-
-* * *
+## 12.5 閾値最適化 (Backend Batch)
+(Azure Functions Timer Trigger)
 
 # 13\. 性能設計
 
@@ -1311,30 +1172,30 @@ Azure Computer Vision Read API
 - 追加Regexエンジン
 
 
+## 2.3 OCR & PII層 (Client Side)
+
+**Web Frontend (Browser)** 上で実行。
+
+### OCR
+- Tesseract.js (v5.1.0)
+- 言語: 英語 + 日本語
+
+### PII Detection
+- 正規表現ベース + 辞書マッチング
+- 対象: Email, 電話番号, 氏名(ローマ字)
+
 フロー：
-
-```
-nginx
-Copy code
-
-OCR → PII抽出 → スコア算出 → マスク → 保存
+```nginx
+Browser: Resize → OCR → PII検出 → マスク → DirectLine送信
 ```
 
 * * *
 
-## 2.4 Statistical Scoring API
+## 2.4 Statistical Scoring & Logging
 
-Azure App Service（内部API）
+**Copilot Studio / Azure Functions**
 
-機能：
-
-- 重み付きスコア算出
-
-- Softmax確率化
-
-- 誤認識確率計算
-
-- 閾値判定
+Web Frontend から送信された `channelData` (統計情報) を基にログ保存・分析を行う。
 
 
 * * *
@@ -1344,14 +1205,8 @@ Azure App Service（内部API）
 Azure Function（Timer Trigger）
 
 月次実行：
-
-- ROC生成
-
-- Youden Index計算
-
-- 新閾値算出
-
-- threshold\_version更新
+- ログ分析
+- 閾値見直し (手動/半自動)
 
 
 * * *
@@ -1560,74 +1415,53 @@ Copy code
 ## 1.1 レベル0（コンテキスト図）
 
 
-```
-css
-Copy code
-
+```css
 [User]
    │ ①Text / Image
    ▼
 [Web Chat UI]
-   │ ②Preprocessed Image
+   │ (Client Side)
+   │ - OCR / PII Check
+   │ - Masking
+   │
+   │ ②Masked Image + Meta(JSON)
    ▼
 [Copilot Studio]
-   │ ③JSON解析
-   ▼
-[AI Processing Layer]
-   │ ④PII Masked Image
-   │ ⑤Scoring Result
+   │ ③RAG Search & Answer Gen
    ▼
 [Data Layer]
-   │ ⑥Event Log
-   │ ⑦Masked Image Storage
+   │ ④Event Log (via ChannelData)
+   │ ⑤Masked Image Storage
 ```
 
 * * *
 
 ## 1.2 レベル1（詳細DFD）
 
-```
-scss
-Copy code
-
+```scss
 (1) User
     │
     ▼
-(2) Web Frontend
+(2) Web Frontend (Client Side)
     - Resize
     - Compress
     - EXIF Remove
+    - OCR (Tesseract.js)
+    - PII Detection & Masking
+    - ChannelData Creation (Stats)
     │
     ▼
 (3) Direct Line
-    │
+    │ (Masked Image + ChannelData)
     ▼
 (4) Copilot Studio
-    - Prompt A (Image → JSON)
-    - Prompt B (Cluster)
-    - RAG
+    - RAG Search
+    - Answer Generation (JSON)
     │
     ▼
-(5) OCR Service
-    │
-    ▼
-(6) PII Detection
-    │
-    ▼
-(7) PII Masking
-    │
-    ▼
-(8) Statistical Scoring API
-    - Softmax
-    - Misclassification Probability
-    - Threshold Decision
-    │
-    ▼
-(9) Event Logger
-    │
-    ▼
-(10) Azure SQL
-(11) Blob (Masked Image)
+(5) Backend Logging (Azure Functions)
+    - Save Event Log (SQL)
+    - Save Masked Image (Blob)
 ```
 
 * * *
@@ -1663,9 +1497,9 @@ yaml
 Copy code
 
 Boundary A: Internet ↔ Azure (WAF)
-Boundary B: Frontend ↔ Copilot
-Boundary C: Copilot ↔ AI Services
-Boundary D: AI Services ↔ Data Layer
+Boundary B: Client Frontend ↔ Copilot Studio (Direct Line)
+Boundary C: Copilot Studio ↔ Internal Knowledge (RAG)
+Boundary D: Backend Logging ↔ Data Layer (SQL/Blob)
 ```
 
 * * *
@@ -1778,15 +1612,10 @@ Boundary D: AI Services ↔ Data Layer
 
 # 8\. 攻撃面（Attack Surface）
 
+- Web Client (XSS/Injection)
 - Direct Line API
-
-- OCR API
-
-- PII API
-
-- SQL接続
-
-- Blob Storage
+- SQL接続 (Internal)
+- Blob Storage (Private)
 
 
 * * *
