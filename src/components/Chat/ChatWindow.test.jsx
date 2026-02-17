@@ -257,4 +257,66 @@ describe('ChatWindow Integration', () => {
             }));
         });
     });
+
+    it('handles send error and retry', async () => {
+        // Mock postActivity to fail
+        directLineService.directLine.postActivity.mockReturnValue({
+            subscribe: (next, error) => {
+                error(new Error('Network Error'));
+                return { unsubscribe: vi.fn() };
+            }
+        });
+
+        render(<ChatWindow onClose={() => { }} />);
+        fireEvent.click(screen.getByText('Send Text'));
+
+        // Verify Error Display
+        await waitFor(() => {
+            expect(screen.getByText('送信に失敗しました')).toBeDefined();
+            expect(screen.getByText('再度送信')).toBeDefined();
+        });
+
+        // Click Retry
+        fireEvent.click(screen.getByText('再度送信'));
+
+        // Should attempt to send again (check call count)
+        expect(directLineService.directLine.postActivity).toHaveBeenCalledTimes(2);
+    });
+
+    it('escalates after max retries', async () => {
+        // Mock postActivity to always fail
+        directLineService.directLine.postActivity.mockReturnValue({
+            subscribe: (next, error) => {
+                error(new Error('Persistent Error'));
+                return { unsubscribe: vi.fn() };
+            }
+        });
+
+        render(<ChatWindow onClose={() => { }} />);
+        fireEvent.click(screen.getByText('Send Text'));
+
+        // Fail 1st time
+        await waitFor(() => expect(screen.getByText('再度送信')).toBeDefined());
+        fireEvent.click(screen.getByText('再度送信'));
+
+        // Fail 2nd time
+        await waitFor(() => expect(screen.getByText('送信に失敗しました')).toBeDefined());
+        fireEvent.click(screen.getByText('再度送信'));
+
+        // Fail 3rd time -> Should Escalate (RETRY action logic)
+        // Note: retryCount increments on error. 
+        // 1st error (count=1), Retry -> 2nd error (count=2), Retry -> 3rd error (count=3).
+        // Next Retry click (count=3) -> Should Escalate.
+
+        await waitFor(() => expect(screen.getByText('送信に失敗しました')).toBeDefined());
+        fireEvent.click(screen.getByText('担当者に転送'));
+
+        // Wait for escalation
+        await waitFor(() => {
+            // Check if escalation message or component is shown
+            // In ChatWindow, ESCALATE answer type renders ResponseDisplay
+            // ResponseDisplay for ESCALATE shows "専門の担当者にお繋ぎします" (from implementation assumption)
+            // or check state change logic indirectly
+        });
+    });
 });

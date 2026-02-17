@@ -21,10 +21,55 @@ class DirectLineService {
             this.directLine = new DirectLine({ secret: DIRECT_LINE_SECRET });
         } else {
             console.warn('DirectLine secret is missing. Chat will not work until configured.');
-            // Fallback for UI testing
+            // ---------------------------------------------------------
+            // Fallback for UI testing (MOCK IMPLEMENTATION)
+            // WARNING: Remove this mock logic in production environment
+            // ---------------------------------------------------------
+            const listeners = [];
             this.directLine = {
-                activity$: { subscribe: () => { } },
-                postActivity: () => ({ subscribe: (obs) => { obs.next('mock-id'); obs.complete(); } })
+                activity$: {
+                    subscribe: (callback) => {
+                        listeners.push(callback);
+                        return {
+                            unsubscribe: () => {
+                                const idx = listeners.indexOf(callback);
+                                if (idx > -1) listeners.splice(idx, 1);
+                            }
+                        };
+                    }
+                },
+                postActivity: (userActivity) => ({
+                    subscribe: (observerOrNext, onError, onComplete) => {
+                        console.log('Mock postActivity called', userActivity);
+                        const id = 'mock-id-' + Date.now();
+
+                        // 1. Acknowledge send success
+                        if (typeof observerOrNext === 'function') {
+                            observerOrNext(id);
+                        } else if (observerOrNext && typeof observerOrNext.next === 'function') {
+                            observerOrNext.next(id);
+                            if (observerOrNext.complete) observerOrNext.complete();
+                        }
+
+                        // 2. Simulate Bot Response
+                        setTimeout(() => {
+                            const botReply = {
+                                from: { id: 'bot', name: 'AI Assistant' },
+                                type: 'message',
+                                text: `(Mock) Received: ${userActivity.text || 'Image'}`,
+                                id: 'bot-msg-' + Date.now(),
+                                timestamp: new Date().toISOString(),
+                                value: {
+                                    answerType: 'AUTO_RESOLVE',
+                                    faqLinks: [{ title: 'Mock FAQ Link', url: '#' }]
+                                }
+                            };
+                            listeners.forEach(cb => cb(botReply));
+                        }, 1000);
+
+                        return { unsubscribe: () => { } };
+                    }
+                })
             };
         }
     }
