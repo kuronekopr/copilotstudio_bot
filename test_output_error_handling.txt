@@ -1,0 +1,270 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mC:/Antigravity/copilotstudio_bot[39m
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mhandles text-only message sending
+[22m[39m[Event] text_message_sending {}
+Message sent id-123
+[Event] masked_message_sent {}
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mprocesses image and shows PII review when PII detected
+[22m[39m[Event] image_selected { count: [33m1[39m }
+[Event] preprocessing_started {}
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mprocesses image and shows PII review when PII detected
+[22m[39m[Event] preprocessing_completed { processingTimeMs: [90mundefined[39m }
+[Event] pii_detection_completed { detectionCount: [33m1[39m }
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mcompletes PII review and sends masked image
+[22m[39m[Event] image_selected { count: [33m1[39m }
+[Event] preprocessing_started {}
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mcompletes PII review and sends masked image
+[22m[39m[Event] preprocessing_completed { processingTimeMs: [90mundefined[39m }
+[Event] pii_detection_completed { detectionCount: [33m1[39m }
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mcompletes PII review and sends masked image
+[22m[39m[Event] pii_review_submitted {}
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mcompletes PII review and sends masked image
+[22m[39mMessage sent id-123
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mcompletes PII review and sends masked image
+[22m[39m[Event] masked_message_sent {}
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mprocesses image and skips review when NO PII detected
+[22m[39m[Event] image_selected { count: [33m1[39m }
+[Event] preprocessing_started {}
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mprocesses image and skips review when NO PII detected
+[22m[39m[Event] preprocessing_completed { processingTimeMs: [90mundefined[39m }
+[Event] pii_detection_completed { detectionCount: [33m0[39m }
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mprocesses image and skips review when NO PII detected
+[22m[39mMessage sent id-123
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mprocesses image and skips review when NO PII detected
+[22m[39m[Event] masked_message_sent {}
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mdisplays FAQ and handles vote (AUTO_RESOLVE)
+[22m[39mVoted positive for message msg-faq-1
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mdisplays clarification options and sends selection
+[22m[39m[Event] text_message_sending {}
+Message sent id-123
+[Event] masked_message_sent {}
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mhandles send error and retry
+[22m[39m[Event] text_message_sending {}
+[Event] send_failed { error: [32m'Network Error'[39m }
+
+[90mstderr[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mhandles send error and retry
+[22m[39mError sending message Error: Network Error
+    at Object.subscribe (C:/Antigravity/copilotstudio_bot/src/components/Chat/ChatWindow.test.jsx:265:23)
+    at sendMessage (C:/Antigravity/copilotstudio_bot/src/components/Chat/ChatWindow.jsx:129:73)
+    at C:/Antigravity/copilotstudio_bot/src/components/Chat/ChatWindow.jsx:145:13
+    at Object.react_stack_bottom_frame [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:25989:20[90m)[39m
+    at runWithFiberInDEV [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:874:13[90m)[39m
+    at commitHookEffectListMount [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:13249:29[90m)[39m
+    at commitHookPassiveMountEffects [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:13336:11[90m)[39m
+    at commitPassiveMountOnFiber [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:15484:13[90m)[39m
+    at recursivelyTraversePassiveMountEffects [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:15439:11[90m)[39m
+    at commitPassiveMountOnFiber [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:15519:11[90m)[39m
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mhandles send error and retry
+[22m[39m[Event] retry_attempted { retryCount: [33m1[39m }
+[Event] send_failed { error: [32m'Network Error'[39m }
+
+[90mstderr[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mhandles send error and retry
+[22m[39mError sending message Error: Network Error
+    at Object.subscribe (C:/Antigravity/copilotstudio_bot/src/components/Chat/ChatWindow.test.jsx:265:23)
+    at sendMessage (C:/Antigravity/copilotstudio_bot/src/components/Chat/ChatWindow.jsx:129:73)
+    at C:/Antigravity/copilotstudio_bot/src/components/Chat/ChatWindow.jsx:145:13
+    at Object.react_stack_bottom_frame [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:25989:20[90m)[39m
+    at runWithFiberInDEV [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:874:13[90m)[39m
+    at commitHookEffectListMount [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:13249:29[90m)[39m
+    at commitHookPassiveMountEffects [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:13336:11[90m)[39m
+    at commitPassiveMountOnFiber [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:15484:13[90m)[39m
+    at recursivelyTraversePassiveMountEffects [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:15439:11[90m)[39m
+    at commitPassiveMountOnFiber [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:15519:11[90m)[39m
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mescalates after max retries
+[22m[39m[Event] text_message_sending {}
+[Event] send_failed { error: [32m'Persistent Error'[39m }
+
+[90mstderr[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mescalates after max retries
+[22m[39mError sending message Error: Persistent Error
+    at Object.subscribe (C:/Antigravity/copilotstudio_bot/src/components/Chat/ChatWindow.test.jsx:290:23)
+    at sendMessage (C:/Antigravity/copilotstudio_bot/src/components/Chat/ChatWindow.jsx:129:73)
+    at C:/Antigravity/copilotstudio_bot/src/components/Chat/ChatWindow.jsx:145:13
+    at Object.react_stack_bottom_frame [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:25989:20[90m)[39m
+    at runWithFiberInDEV [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:874:13[90m)[39m
+    at commitHookEffectListMount [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:13249:29[90m)[39m
+    at commitHookPassiveMountEffects [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:13336:11[90m)[39m
+    at commitPassiveMountOnFiber [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:15484:13[90m)[39m
+    at recursivelyTraversePassiveMountEffects [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:15439:11[90m)[39m
+    at commitPassiveMountOnFiber [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:15519:11[90m)[39m
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mescalates after max retries
+[22m[39m[Event] retry_attempted { retryCount: [33m1[39m }
+[Event] send_failed { error: [32m'Persistent Error'[39m }
+
+[90mstderr[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mescalates after max retries
+[22m[39mError sending message Error: Persistent Error
+    at Object.subscribe (C:/Antigravity/copilotstudio_bot/src/components/Chat/ChatWindow.test.jsx:290:23)
+    at sendMessage (C:/Antigravity/copilotstudio_bot/src/components/Chat/ChatWindow.jsx:129:73)
+    at C:/Antigravity/copilotstudio_bot/src/components/Chat/ChatWindow.jsx:145:13
+    at Object.react_stack_bottom_frame [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:25989:20[90m)[39m
+    at runWithFiberInDEV [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:874:13[90m)[39m
+    at commitHookEffectListMount [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:13249:29[90m)[39m
+    at commitHookPassiveMountEffects [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:13336:11[90m)[39m
+    at commitPassiveMountOnFiber [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:15484:13[90m)[39m
+    at recursivelyTraversePassiveMountEffects [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:15439:11[90m)[39m
+    at commitPassiveMountOnFiber [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:15519:11[90m)[39m
+
+[90mstdout[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mescalates after max retries
+[22m[39m[Event] retry_attempted { retryCount: [33m2[39m }
+[Event] send_failed { error: [32m'Persistent Error'[39m }
+
+[90mstderr[2m | src/components/Chat/ChatWindow.test.jsx[2m > [22m[2mChatWindow Integration[2m > [22m[2mescalates after max retries
+[22m[39mError sending message Error: Persistent Error
+    at Object.subscribe (C:/Antigravity/copilotstudio_bot/src/components/Chat/ChatWindow.test.jsx:290:23)
+    at sendMessage (C:/Antigravity/copilotstudio_bot/src/components/Chat/ChatWindow.jsx:129:73)
+    at C:/Antigravity/copilotstudio_bot/src/components/Chat/ChatWindow.jsx:145:13
+    at Object.react_stack_bottom_frame [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:25989:20[90m)[39m
+    at runWithFiberInDEV [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:874:13[90m)[39m
+    at commitHookEffectListMount [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:13249:29[90m)[39m
+    at commitHookPassiveMountEffects [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:13336:11[90m)[39m
+    at commitPassiveMountOnFiber [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:15484:13[90m)[39m
+    at recursivelyTraversePassiveMountEffects [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:15439:11[90m)[39m
+    at commitPassiveMountOnFiber [90m(C:\Antigravity\copilotstudio_bot\[39mnode_modules\[4mreact-dom[24m\cjs\react-dom-client.development.js:15519:11[90m)[39m
+
+ [31m❯[39m src/components/Chat/ChatWindow.test.jsx [2m([22m[2m9 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 244[2mms[22m[39m
+     [32m✓[39m renders correctly[32m 28[2mms[22m[39m
+     [32m✓[39m handles text-only message sending[32m 36[2mms[22m[39m
+     [32m✓[39m processes image and shows PII review when PII detected[32m 18[2mms[22m[39m
+     [32m✓[39m completes PII review and sends masked image[32m 29[2mms[22m[39m
+     [32m✓[39m processes image and skips review when NO PII detected[32m 16[2mms[22m[39m
+     [32m✓[39m displays FAQ and handles vote (AUTO_RESOLVE)[32m 31[2mms[22m[39m
+     [32m✓[39m displays clarification options and sends selection[32m 31[2mms[22m[39m
+     [32m✓[39m handles send error and retry[32m 20[2mms[22m[39m
+[31m     [31m×[31m escalates after max retries[39m[32m 33[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/components/Chat/ChatWindow.test.jsx[2m > [22mChatWindow Integration[2m > [22mescalates after max retries
+[31m[1mTestingLibraryElementError[22m: Unable to find an element with the text: 再度送信. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<div[31m
+      [33mclass[31m=[32m"chat-window"[31m
+    [36m>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"chat-header"[31m
+      [36m>[31m
+        [36m<span>[31m
+          [0mAIチャットボット[0m
+        [36m</span>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"header-right"[31m
+        [36m>[31m
+          [36m<span[31m
+            [33mclass[31m=[32m"connection-dot connected"[31m
+          [36m/>[31m
+          [36m<button[31m
+            [33mclass[31m=[32m"close-btn"[31m
+          [36m>[31m
+            [0m×[0m
+          [36m</button>[31m
+        [36m</div>[31m
+      [36m</div>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"state-debug-bar"[31m
+      [36m>[31m
+        [0m状態: [0m
+        [0mERROR[0m
+        [0m (リトライ: 3/3)[0m
+      [36m</div>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"message-list"[31m
+      [36m>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"message user"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"message-content"[31m
+          [36m>[31m
+            [36m<div>[31m
+              [0mText Only[0m
+              [36m<br />[31m
+            [36m</div>[31m
+          [36m</div>[31m
+          [36m<span[31m
+            [33mclass[31m=[32m"message-time"[31m
+          [36m>[31m
+            [0m09:14[0m
+          [36m</span>[31m
+        [36m</div>[31m
+        [36m<div />[31m
+      [36m</div>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"error-banner"[31m
+      [36m>[31m
+        [36m<span[31m
+          [33mclass[31m=[32m"error-icon"[31m
+        [36m>[31m
+          [0m⚠️[0m
+        [36m</span>[31m
+        [36m<span[31m
+          [33mclass[31m=[32m"error-message"[31m
+        [36m>[31m
+          [0m送信に失敗しました[0m
+        [36m</span>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"error-actions"[31m
+        [36m>[31m
+          [36m<button[31m
+            [33mclass[31m=[32m"error-cancel-btn"[31m
+          [36m>[31m
+            [0mキャンセル[0m
+          [36m</button>[31m
+        [36m</div>[31m
+      [36m</div>[31m
+      [36m<div[31m
+        [33mdata-testid[31m=[32m"input-area"[31m
+      [36m>[31m
+        [36m<button[31m
+          [33mdisabled[31m=[32m""[31m
+        [36m>[31m
+          [0mSend Image[0m
+        [36m</button>[31m
+        [36m<button[31m
+          [33mdisabled[31m=[32m""[31m
+        [36m>[31m
+          [0mSend Text[0m
+        [36m</button>[31m
+      [36m</div>[31m
+    [36m</div>[31m
+  [36m</div>[31m
+[36m</body>[31m[39m
+[90m [2m❯[22m Object.getElementError node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m76:38[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m52:17[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+[36m [2m❯[22m src/components/Chat/ChatWindow.test.jsx:[2m312:32[22m[39m
+    [90m310| [39m
+    [90m311| [39m        await waitFor(() => expect(screen.getByText('送信に失敗しました')).toBe…
+    [90m312| [39m        fireEvent[33m.[39m[34mclick[39m(screen[33m.[39m[34mgetByText[39m([32m'再度送信'[39m))[33m;[39m
+    [90m   | [39m                               [31m^[39m
+    [90m313| [39m
+    [90m314| [39m        [90m// Wait for escalation[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m8 passed[39m[22m[90m (9)[39m
+[2m   Start at [22m 09:14:52
+[2m   Duration [22m 1.94s[2m (transform 160ms, setup 138ms, import 277ms, tests 244ms, environment 1.08s)[22m
+

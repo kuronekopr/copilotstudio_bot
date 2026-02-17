@@ -17,6 +17,12 @@ const ChatWindow = ({ onClose }) => {
     const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
     const [reviewedImages, setReviewedImages] = useState([]);
 
+    // Use ref to access current state inside effect closure
+    const chatStateRef = React.useRef(chatState);
+    useEffect(() => {
+        chatStateRef.current = chatState;
+    }, [chatState]);
+
     useEffect(() => {
         // Initialize Direct Line
         directLineService.initialize();
@@ -26,7 +32,8 @@ const ChatWindow = ({ onClose }) => {
             setMessages(prev => [...prev, activity]);
 
             // When bot responds, transition state
-            if (chatState.currentState === STATES.WAITING_RESPONSE) {
+            // Use ref to check current state
+            if (chatStateRef.current.currentState === STATES.WAITING_RESPONSE) {
                 // Determine answer type from activity (customize based on bot payload)
                 const answerType = activity.value?.answerType || ANSWER_TYPES.AUTO_RESOLVE;
                 dispatch({
@@ -253,9 +260,13 @@ const ChatWindow = ({ onClose }) => {
                     <span className="error-icon">⚠️</span>
                     <span className="error-message">{chatState.error?.message}</span>
                     <div className="error-actions">
-                        {chatState.retryCount < 3 && (
+                        {chatState.retryCount < 3 ? (
                             <button className="error-retry-btn" onClick={handleRetry}>
                                 再度送信
+                            </button>
+                        ) : (
+                            <button className="error-retry-btn" onClick={handleRetry}>
+                                担当者に転送
                             </button>
                         )}
                         <button className="error-cancel-btn" onClick={handleReset}>

@@ -24,6 +24,28 @@
         right: 0;
         border-radius: 0;
     }
+
+    .message {
+        max-width: 90%;
+        /* Wider width for mobile */
+        font-size: 1rem;
+        /* Readable font size */
+    }
+
+    .input-area {
+        padding: 12px;
+        /* Larger touch area */
+    }
+
+    .send-btn,
+    .attach-btn {
+        padding: 12px;
+        /* Larger touch targets */
+    }
+
+    .status-indicator {
+        padding: 12px;
+    }
 }
 
 /* Header */
