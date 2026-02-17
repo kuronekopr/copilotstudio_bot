@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 // In a real app, you might fetch this from a protected API to avoid exposing secrets
 // For this demo/POC, we use a placeholder or public token if available.
 // NOTE: You need a Direct Line Token or Secret here.
-const DIRECT_LINE_SECRET = 'YOUR_DIRECT_LINE_SECRET_HERE'; // TODO: Replace with env var or fetch
+const DIRECT_LINE_SECRET = import.meta.env.VITE_DIRECT_LINE_SECRET || 'YOUR_DIRECT_LINE_SECRET_HERE';
 
 class DirectLineService {
     constructor() {
@@ -53,17 +53,45 @@ class DirectLineService {
 
                         // 2. Simulate Bot Response
                         setTimeout(() => {
-                            const botReply = {
+                            let botReply = {
                                 from: { id: 'bot', name: 'AI Assistant' },
                                 type: 'message',
-                                text: `(Mock) Received: ${userActivity.text || 'Image'}`,
                                 id: 'bot-msg-' + Date.now(),
                                 timestamp: new Date().toISOString(),
-                                value: {
-                                    answerType: 'AUTO_RESOLVE',
-                                    faqLinks: [{ title: 'Mock FAQ Link', url: '#' }]
-                                }
+                                value: {}
                             };
+
+                            const text = (userActivity.text || '').toLowerCase();
+
+                            if (text.includes('agent') || text.includes('human') || text.includes('escalate')) {
+                                // ESCALATE Pattern
+                                botReply.text = '担当者に転送しますか？\n現在、電話窓口は混雑しています。';
+                                botReply.value = {
+                                    answerType: 'ESCALATE',
+                                    reason: 'User requested agent'
+                                };
+                            } else if (text.includes('clarify') || text.includes('option')) {
+                                // ASK_CLARIFICATION Pattern
+                                botReply.text = 'どちらの製品について知りたいですか？';
+                                botReply.value = {
+                                    answerType: 'ASK_CLARIFICATION',
+                                    options: [
+                                        { label: 'Cloud Service A', value: 'Service A' },
+                                        { label: 'On-Premise B', value: 'Product B' }
+                                    ]
+                                };
+                            } else {
+                                // DEFAULT: AUTO_RESOLVE Pattern
+                                botReply.text = `【状況整理】\nユーザーは画像からエラーコード「E-1234」を確認しました。\n\n【確認された事実】\n- ログイン画面でのエラー発生\n- 再起動後も解消せず\n\n【想定原因】\n1. 認証サーバーとの通信タイムアウト\n2. アプリケーションキャッシュの破損\n\n【解決手順】\n1. ブラウザのキャッシュをクリアしてください\n2. 5分後に再試行してください`;
+                                botReply.value = {
+                                    answerType: 'AUTO_RESOLVE',
+                                    faqLinks: [
+                                        { title: '認証エラーE-1234について', url: '#' },
+                                        { title: 'キャッシュクリアの手順', url: '#' }
+                                    ]
+                                };
+                            }
+
                             listeners.forEach(cb => cb(botReply));
                         }, 1000);
 

@@ -98,6 +98,12 @@ const initialState = {
     retryCount: 0,
     sessionId: null,
     pendingText: '',         // Text message pending send
+    processingStats: {
+        preprocessingTimeMs: 0,
+        piiDetectionTimeMs: 0,
+        totalClientTimeMs: 0
+    },
+    piiStats: null
 };
 
 // ---------- Reducer ----------
@@ -150,6 +156,10 @@ function chatReducer(state, action) {
                 previousState: state.currentState,
                 currentState: STATES.PII_DETECTING,
                 processedImages: payload?.processedImages || state.images,
+                processingStats: {
+                    ...state.processingStats,
+                    preprocessingTimeMs: payload?.processingTimeMs || 0
+                }
             };
 
         case ACTIONS.PREPROCESSING_ERROR:
@@ -179,6 +189,11 @@ function chatReducer(state, action) {
                     previousState: state.currentState,
                     currentState: STATES.PII_REVIEW,
                     piiDetections: payload.detections,
+                    piiStats: payload.piiStats,
+                    processingStats: {
+                        ...state.processingStats,
+                        piiDetectionTimeMs: payload?.processingTimeMs || 0
+                    }
                 };
             }
             // No PII → skip review, go to SENDING
@@ -187,6 +202,11 @@ function chatReducer(state, action) {
                 previousState: state.currentState,
                 currentState: STATES.SENDING,
                 piiDetections: [],
+                piiStats: payload.piiStats,
+                processingStats: {
+                    ...state.processingStats,
+                    piiDetectionTimeMs: payload?.processingTimeMs || 0
+                }
             };
 
         case ACTIONS.PII_DETECTION_ERROR:

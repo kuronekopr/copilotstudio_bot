@@ -95,9 +95,12 @@ describe('ChatWindow Integration', () => {
         preprocessImage.mockResolvedValue(processedBlob);
 
         // Mock PII detection
-        detectPII.mockResolvedValue([
-            { type: 'EMAIL', text: 'test@example.com', bbox: { x0: 0, y0: 0, x1: 10, y1: 10 }, confidence: 90 }
-        ]);
+        detectPII.mockResolvedValue({
+            detections: [
+                { type: 'EMAIL', text: 'test@example.com', bbox: { x0: 0, y0: 0, x1: 10, y1: 10 }, confidence: 90 }
+            ],
+            stats: { detectedCount: 1, confidenceAvg: 90 }
+        });
 
         render(<ChatWindow onClose={() => { }} />);
 
@@ -119,9 +122,12 @@ describe('ChatWindow Integration', () => {
         // Setup Mocks
         const processedBlob = new Blob(['processed'], { type: 'image/png' });
         preprocessImage.mockResolvedValue(processedBlob);
-        detectPII.mockResolvedValue([
-            { type: 'EMAIL', text: 'test@example.com', bbox: {}, confidence: 90 }
-        ]);
+        detectPII.mockResolvedValue({
+            detections: [
+                { type: 'EMAIL', text: 'test@example.com', bbox: {}, confidence: 90 }
+            ],
+            stats: { detectedCount: 1, confidenceAvg: 90 }
+        });
 
         render(<ChatWindow onClose={() => { }} />);
 
@@ -141,7 +147,7 @@ describe('ChatWindow Integration', () => {
             expect(screen.getByText('送信中...')).toBeDefined();
         });
 
-        // Verify postActivity called with masked image
+        // Verify postActivity called with masked image and channelData
         await waitFor(() => {
             expect(directLineService.directLine.postActivity).toHaveBeenCalledWith(expect.objectContaining({
                 text: 'Test Message',
@@ -149,7 +155,17 @@ describe('ChatWindow Integration', () => {
                     expect.objectContaining({
                         name: 'masked.png' // Ensure masked image is sent
                     })
-                ])
+                ]),
+                channelData: expect.objectContaining({
+                    processingStats: expect.objectContaining({
+                        totalClientTimeMs: expect.any(Number)
+                    }),
+                    piiStats: expect.objectContaining({
+                        detectedCount: 1,
+                        confidenceAvg: 90
+                    }),
+                    maskingUsed: true
+                })
             }));
         });
     });
@@ -157,7 +173,10 @@ describe('ChatWindow Integration', () => {
     it('processes image and skips review when NO PII detected', async () => {
         const processedBlob = new Blob(['processed'], { type: 'image/png' });
         preprocessImage.mockResolvedValue(processedBlob);
-        detectPII.mockResolvedValue([]); // No PII
+        detectPII.mockResolvedValue({
+            detections: [],
+            stats: { detectedCount: 0, confidenceAvg: 0 }
+        }); // No PII
 
         render(<ChatWindow onClose={() => { }} />);
 
@@ -168,8 +187,15 @@ describe('ChatWindow Integration', () => {
             // Editor should NOT appear
             expect(screen.queryByTestId('image-mask-editor')).toBeNull();
 
-            // Should call postActivity
-            expect(directLineService.directLine.postActivity).toHaveBeenCalled();
+            // Should call postActivity with correct channelData
+            expect(directLineService.directLine.postActivity).toHaveBeenCalledWith(expect.objectContaining({
+                channelData: expect.objectContaining({
+                    piiStats: expect.objectContaining({
+                        detectedCount: 0
+                    }),
+                    maskingUsed: false
+                })
+            }));
         });
     });
 

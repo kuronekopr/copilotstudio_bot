@@ -55,33 +55,60 @@ const ChatWindow = ({ onClose }) => {
                 try {
                     const imagesToProcess = chatState.images;
 
+                    const preStart = performance.now();
                     // 1. Preprocess (Resize/EXIF)
                     const processedBlobs = await Promise.all(
                         imagesToProcess.map(img => preprocessImage(img))
                     );
+                    const preEnd = performance.now();
 
                     dispatch({
                         type: ACTIONS.PREPROCESSING_DONE,
-                        payload: { processedImages: processedBlobs }
+                        payload: {
+                            processedImages: processedBlobs,
+                            processingTimeMs: Math.round(preEnd - preStart)
+                        }
                     });
 
                     // 2. PII Detection
+                    const piiStart = performance.now();
                     const imageUrls = processedBlobs.map(blob => URL.createObjectURL(blob));
 
                     let allDetections = [];
+                    let piiStats = { totalDetected: 0, globalConfidenceAvg: 0 };
+                    let totalConfidenceSum = 0;
+
                     for (let i = 0; i < imageUrls.length; i++) {
-                        const dets = await detectPII(imageUrls[i]);
+                        const { detections, stats } = await detectPII(imageUrls[i]);
                         // Attach image index to detection for UI mapping
-                        const detsWithIndex = dets.map(d => ({ ...d, imageIndex: i }));
+                        const detsWithIndex = detections.map(d => ({ ...d, imageIndex: i }));
                         allDetections = [...allDetections, ...detsWithIndex];
+
+                        piiStats.totalDetected += stats.detectedCount;
+                        if (stats.detectedCount > 0) {
+                            // Weighted average calculation (approximated here by summing confidences)
+                            // Actually we can just sum up confidences from detections directly
+                            const sumConf = detections.reduce((sum, d) => sum + d.confidence, 0);
+                            totalConfidenceSum += sumConf;
+                        }
                     }
+
+                    piiStats.globalConfidenceAvg = piiStats.totalDetected > 0
+                        ? parseFloat((totalConfidenceSum / piiStats.totalDetected).toFixed(2))
+                        : 0;
 
                     // Cleanup URLs
                     imageUrls.forEach(url => URL.revokeObjectURL(url));
 
+                    const piiEnd = performance.now();
+
                     dispatch({
                         type: ACTIONS.PII_DETECTION_DONE,
-                        payload: { detections: allDetections }
+                        payload: {
+                            detections: allDetections,
+                            piiStats,
+                            processingTimeMs: Math.round(piiEnd - piiStart)
+                        }
                     });
 
                 } catch (error) {
@@ -123,7 +150,16 @@ const ChatWindow = ({ onClose }) => {
                         from: { id: directLineService.userId, name: directLineService.username },
                         type: 'message',
                         text: chatState.pendingText || '',
-                        attachments: attachments
+                        attachments: attachments,
+                        channelData: {
+                            clientTimestamp: new Date().toISOString(),
+                            processingStats: {
+                                ...chatState.processingStats,
+                                totalClientTimeMs: chatState.processingStats.preprocessingTimeMs + chatState.processingStats.piiDetectionTimeMs
+                            },
+                            piiStats: chatState.piiStats,
+                            maskingUsed: chatState.maskedImages.length > 0
+                        }
                     };
 
                     directLineService.directLine.postActivity(activity).subscribe(
